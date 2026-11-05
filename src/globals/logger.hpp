@@ -49,20 +49,20 @@ class logger : public singleton<logger> {
 #undef X
         };
     };
-    std::ostream* m_stream;
+    std::ostream* m_nonown_stream;
 
    public:
     void log(const log_info& info, std::ostream& os) {
-        if (!m_stream) m_stream = &os;
+        if (!m_nonown_stream) m_nonown_stream = &os;
         update_log_data(info);
         os << "[MONAC-" << info.type_to_string(info.type) << "] " << info.what << std::endl;
     };
 
     void report() {
-        if (m_stream) {
-            (*m_stream) << "Generated: \n";
+        if (m_nonown_stream) {
+            (*m_nonown_stream) << "Generated: \n";
 #define X(V) \
-    (*m_stream) << #V << "S " << m_data.V##S << "\n";
+    (*m_nonown_stream) << #V << "S " << m_data.V##S << "\n";
             LIST_OF_LOG_TYPES
 #undef X
         }
