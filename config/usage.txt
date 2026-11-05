@@ -7,11 +7,11 @@ Options:
     --vlex <input_file> [output_file]           (-l)    Dumps tokens from input file into output file, if no output file, dumps it to stdout.
     --vast <input_file> [output_file]           (-p)    Dumps ast from input file into output file, if no output file, dumps it to stdout.
     --vasm <input_file> [output_file]           (-a)    Dumps generated assembly from input file into output file, if no output file, dumps it to stdout.
-    --output <output_file>                      (-o)    Place the output of the compilation into <output_file> if no output file is given, monac is free to create a default (named "default") output file.
-
+    --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name> if no name is given, monac is free to create a default (named "default") executable.
+    --input  <input_file...>                    (-i)    Pipe a variadic list of input files to be compiled.
 EXAMPLES:
-    monac input.mx
-    monac -o output input.mx
+    monac --input input.mx
+    monac -o output -i input.mx
     monac --vlex input.mx
     monac --vast input.mx ast.txt
     monac --vasm input.mx assembly.s

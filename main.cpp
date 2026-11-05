@@ -19,6 +19,11 @@ int main(int argc, char** argv) {
     try {
         cli::args cli{std::move(args)};
         cli.parse();
+        auto info = cli.execute();
+        for (auto f : info.input_files) {
+            std::cout << f << std::endl;
+        }
+        std::cout << info.output << std::endl;
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
     }
