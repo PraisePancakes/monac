@@ -1,0 +1,19 @@
+==== Monac ===
+   [[USAGE]]
+monac [options] file...
+Options:
+    --help                                      (-h)    Display Usage.
+    --version                                   (-v)    Display Version.
+    --vlex <input_file> [output_file]           (-l)    Dumps tokens from input file into output file, if no output file, dumps it to stdout.
+    --vast <input_file> [output_file]           (-p)    Dumps ast from input file into output file, if no output file, dumps it to stdout.
+    --vasm <input_file> [output_file]           (-a)    Dumps generated assembly from input file into output file, if no output file, dumps it to stdout.
+    --output <output_file>                      (-o)    Place the output of the compilation into <output_file> if no output file is given, monac is free to create a default (named "default") output file.
+
+EXAMPLES:
+    monac input.mx
+    monac -o output input.mx
+    monac --vlex input.mx
+    monac --vast input.mx ast.txt
+    monac --vasm input.mx assembly.s
+
+

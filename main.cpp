@@ -13,11 +13,16 @@ int main(int argc, char** argv) {
     }
 
     std::stringstream args;
-    for (int i = 0; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         args << argv[i] << ' ';
     }
-    cli::args cli{std::move(args)};
-    cli.parse();
+    try {
+        cli::args cli{std::move(args)};
+        cli.parse();
+    } catch (cli::cli_except& e) {
+        std::cerr << e.get_reason() << std::endl;
+    }
+
     glob::logger::instance().report();
     return EXIT_SUCCESS;
 };
