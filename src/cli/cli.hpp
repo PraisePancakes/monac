@@ -29,7 +29,7 @@ class args {
     std::stringstream m_arguments;
     std::string m_usage;
     enum class CLI_FLAGS : flag_t {
-#define X(e, ln, sn, v) e = v,
+#define X(e, _, __, v) e = v,
         FLAG_ENTRY_LIST
 #undef X
     };
@@ -78,13 +78,13 @@ class args {
             auto sflag = parsers::single_flag_parser(m_arguments);
             if (dflag.has_value()) {
                 auto flag = dflag.value();
-#define X(e, ln, sn, v) \
+#define X(e, ln, _, __) \
     if (flag == ln) parse_##e();
                 FLAG_ENTRY_LIST
 #undef X
             } else if (sflag.has_value()) {
                 auto flag = sflag.value();
-#define X(e, ln, sn, v) \
+#define X(e, _, sn, __) \
     if (flag == sn) parse_##e();
                 FLAG_ENTRY_LIST
 #undef X
