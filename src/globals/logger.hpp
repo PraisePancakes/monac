@@ -30,12 +30,6 @@ struct log_info {
     std::string what;
 };
 
-template <typename...>
-inline constexpr auto is_unique_set = std::true_type{};
-
-template <typename T, typename... Ts>
-inline constexpr auto is_unique_set<T, Ts...> = std::conditional_t<((std::is_same_v<T, Ts> || ...) || !is_unique_set<Ts...>), std::false_type, std::true_type>::value;
-
 struct log_data {
 #define X(V) \
     unsigned int V##S;
@@ -55,36 +49,23 @@ class logger : public singleton<logger> {
 #undef X
         };
     };
-    std::unordered_set<std::ostream*> m_non_owning_stream_set;
-    std::vector<std::ostream*> m_non_owning_streams;
-
-    void add_stream(std::ostream& os) {
-        if (!m_non_owning_stream_set.contains(&os)) {
-            m_non_owning_stream_set.insert(&os);
-            m_non_owning_streams.push_back(&os);
-        };
-    }
+    std::ostream* m_stream;
 
    public:
-    template <typename... Streams>
-        requires((std::is_base_of_v<std::basic_ostream<char>, std::remove_reference_t<Streams>> && ...) &&
-                 is_unique_set<std::remove_cvref_t<Streams>...>)
-    void log(const log_info& info, Streams&&... s) {
-        (add_stream(s), ...);
+    void log(const log_info& info, std::ostream& os) {
+        if (!m_stream) m_stream = &os;
         update_log_data(info);
-        ((std::forward<Streams>(s) << "[MONAC-" << info.type_to_string(info.type) << "] " << info.what << std::endl), ...);
+        os << "[MONAC-" << info.type_to_string(info.type) << "] " << info.what << std::endl;
     };
 
     void report() {
-        for (const auto& s : m_non_owning_streams) {
-            if (s) {
-                (*s) << "Generated: \n";
+        if (m_stream) {
+            (*m_stream) << "Generated: \n";
 #define X(V) \
-    (*s) << #V << "S " << m_data.V##S << "\n";
-                LIST_OF_LOG_TYPES
+    (*m_stream) << #V << "S " << m_data.V##S << "\n";
+            LIST_OF_LOG_TYPES
 #undef X
-            }
-        };
+        }
     };
     ~logger() {};
 };

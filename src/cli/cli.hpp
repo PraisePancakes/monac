@@ -71,26 +71,29 @@ class args {
         set_flag(CLI_FLAGS::FLAG_VERSION);
     }
 
-    // don't touch this, x-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
     void parse_commands() {
-        while (mona::_either(mona::_check(mona::_match("-")), mona::_check(mona::_match("--")))(m_arguments)) {
-            auto dflag = parsers::double_flag_parser(m_arguments);
-            auto sflag = parsers::single_flag_parser(m_arguments);
-            if (dflag.has_value()) {
-                auto flag = dflag.value();
+        // don't touch this, x-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
+        if (mona::_either(mona::_check(mona::_match("-")), mona::_check(mona::_match("--")))(m_arguments)) {
+            while (mona::_either(mona::_check(mona::_match("-")), mona::_check(mona::_match("--")))(m_arguments)) {
+                auto dflag = parsers::double_flag_parser(m_arguments);
+                auto sflag = parsers::single_flag_parser(m_arguments);
+                if (dflag.has_value()) {
+                    auto flag = dflag.value();
 #define X(e, ln, _, __) \
     if (flag == ln) parse_##e();
-                FLAG_ENTRY_LIST
+                    FLAG_ENTRY_LIST
 #undef X
-            } else if (sflag.has_value()) {
-                auto flag = sflag.value();
+                } else if (sflag.has_value()) {
+                    auto flag = sflag.value();
 #define X(e, _, sn, __) \
     if (flag == sn) parse_##e();
-                FLAG_ENTRY_LIST
+                    FLAG_ENTRY_LIST
 #undef X
-            }
-            parsers::skip_whitespace(m_arguments);
-        };
+                }
+                parsers::skip_whitespace(m_arguments);
+            };
+        } else
+            set_flag(CLI_FLAGS::FLAG_HELP);
     };
 
    public:
