@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef SINGLETON_HPP
+#define SINGLETON_HPP
 namespace glob {
 
 template <typename T>
@@ -20,3 +20,4 @@ class singleton {
     };
 };
 };  // namespace glob
+#endif

@@ -1,11 +1,12 @@
-#pragma once
+#ifndef PARSERS_HPP
+#define PARSERS_HPP
 #include <mona/mona.hpp>
 namespace cli::parsers {
 
 inline auto skip_whitespace = mona::_transform([](auto v) -> std::string { return " "; }, mona::_many_or_none(mona::_match(' ')));
 
 inline auto file_parser = mona::_transform([](auto tup) -> std::string { auto [_, n, d, e, _] = tup; return n + d + e; },
-                                           mona::_sequence(skip_whitespace, mona::_alnum("expected filename"), mona::_match('.', "expected file separator"), mona::_alnum("expected file extension"), skip_whitespace));
+                                           mona::_sequence(skip_whitespace, mona::_alnum("expected filename"), mona::_match('.', "expected file separator"), mona::_either(mona::_match("mm "), mona::_match("mx ")), skip_whitespace));
 inline auto double_flag_parser = mona::_transform([](auto tup) -> std::string {
     std::string flag{""};
     auto [_, vec] = tup;
@@ -29,3 +30,4 @@ inline auto string_parser = mona::_transform([](auto vec) -> std::string {
 },
                                              mona::_many_or_one(mona::_alnum()));
 };  // namespace cli::parsers
+#endif

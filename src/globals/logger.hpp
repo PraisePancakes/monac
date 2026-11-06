@@ -1,6 +1,5 @@
-#pragma once
-#include <unordered_set>
-#include <vector>
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
 
 #include "singleton.hpp"
 namespace glob {
@@ -37,7 +36,7 @@ struct log_data {
 #undef X
 };
 
-class logger : public singleton<logger> {
+class logger final : public singleton<logger> {
     log_data m_data;
     void update_log_data(const log_info& i) {
         switch (i.type) {
@@ -71,3 +70,4 @@ class logger : public singleton<logger> {
 };
 
 };  // namespace glob
+#endif

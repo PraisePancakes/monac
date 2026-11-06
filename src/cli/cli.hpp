@@ -1,12 +1,14 @@
-#pragma once
+#ifndef CLI_HPP
+#define CLI_HPP
 #include <istream>
 #include <mona/mona.hpp>
 
 #include "../cfg/version.hpp"
 #include "../globals/logger.hpp"
-#include "parsers.hpp"
+#include "../utils/parsers.hpp"
+
 namespace cli {
-class cli_except : public std::exception {
+class cli_except final : public std::exception {
     std::string m_what;
 
    public:
@@ -24,7 +26,7 @@ class cli_except : public std::exception {
     X(FLAG_OUTPUT, "output", 'o', 1 << 2)   \
     X(FLAG_INPUT, "input", 'i', 1 << 3)
 
-class args {
+class args final {
     using flag_t = std::uint8_t;
     std::stringstream m_arguments;
     std::string m_usage;
@@ -47,7 +49,7 @@ class args {
     }
     void parse_FLAG_INPUT() {
         set_flag(CLI_FLAGS::FLAG_INPUT);
-        auto files = mona::_many_or_one(parsers::file_parser)(m_arguments);
+        auto files = mona::_many_or_one(parsers::file_parser, "unknown input file extension")(m_arguments);
         if (!files.has_value()) {
             glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = files.error()}, std::cerr);
             throw cli_except("Cli couldn't parse input files");
@@ -135,3 +137,5 @@ class args {
     };
 };
 };  // namespace cli
+
+#endif

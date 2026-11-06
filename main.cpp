@@ -20,6 +20,20 @@ int main(int argc, char** argv) {
         cli::args cli{std::move(args)};
         cli.parse();
         auto info = cli.execute();
+        for (const auto& f : info.input_files) {
+            std::ifstream is{f};
+            if (is.is_open()) {
+                // preprocess
+                // module dependency graph (imports and exports)
+            }
+        };
+
+        // lex
+        // parse
+        // type check
+        // whatever the f*ck else
+        // generate asm
+        // link
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
     }
