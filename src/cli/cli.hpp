@@ -166,7 +166,7 @@ class args final {
             glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No commands see 'monac --help' for more."}, std::cerr);
             throw cli_except("Cli couldn't parse commands");
         }
-        
+
         if (is_set(CLI_FLAGS::FLAG_HELP)) {
             glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::INFO, .what = m_usage}, std::cout);
             throw cli_except("help exception");

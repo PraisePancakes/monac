@@ -21,7 +21,6 @@ int main(int argc, char** argv) {
         cli.parse();
         auto info = cli.execute();
         for (const auto& i : info.input_files) {
-            
         }
         // preprocess
         // module dependency graph (imports and exports)
@@ -33,6 +32,7 @@ int main(int argc, char** argv) {
         // link
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
+        return EXIT_FAILURE;
     }
 
     glob::out.report();
