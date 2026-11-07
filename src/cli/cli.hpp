@@ -159,14 +159,14 @@ class args final {
         parsers::skip_wspace(m_arguments);
         while (!mona::_eof()(m_arguments))
             parse_command();
-
-        if (!any_set()) {
-            glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No commands or unknown commands were inputted see 'monac --help' for more."}, std::cerr);
-            throw cli_except("Cli couldn't parse commands");
-        }
     };
 
     cli_info execute() {
+        if (!any_set()) {
+            glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No commands see 'monac --help' for more."}, std::cerr);
+            throw cli_except("Cli couldn't parse commands");
+        }
+        
         if (is_set(CLI_FLAGS::FLAG_HELP)) {
             glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::INFO, .what = m_usage}, std::cout);
             throw cli_except("help exception");
