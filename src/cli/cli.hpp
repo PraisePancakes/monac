@@ -8,6 +8,7 @@
 #include "../utils/parsers.hpp"
 
 namespace cli {
+using namespace utils;
 class cli_except final : public std::exception {
     std::string m_what;
 
@@ -49,22 +50,9 @@ class args final {
     }
     void parse_FLAG_INPUT() {
         set_flag(CLI_FLAGS::FLAG_INPUT);
-        auto files = mona::_many_or_one(parsers::file_parser, "unknown input file extension")(m_arguments);
-        if (!files.has_value()) {
-            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = files.error()}, std::cerr);
-            throw cli_except("Cli couldn't parse input files");
-        }
-        m_info.input_files = files.value();
     };
     void parse_FLAG_OUTPUT() {
         set_flag(CLI_FLAGS::FLAG_OUTPUT);
-        parsers::skip_whitespace(m_arguments);
-        auto op = parsers::string_parser(m_arguments);
-        if (!op.has_value()) {
-            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing output files"}, std::cerr);
-            throw cli_except("Cli couldn't parse output files");
-        }
-        m_info.output = op.value();
     };
     void parse_FLAG_HELP() {
         set_flag(CLI_FLAGS::FLAG_HELP);
@@ -75,50 +63,30 @@ class args final {
 
     void parse_commands() {
         // don't touch this, x-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
-        if (mona::_either(mona::_check(mona::_match("-")), mona::_check(mona::_match("--")))(m_arguments)) {
-            while (mona::_either(mona::_check(mona::_match("-")), mona::_check(mona::_match("--")))(m_arguments)) {
-                auto dflag = parsers::double_flag_parser(m_arguments);
-                auto sflag = parsers::single_flag_parser(m_arguments);
-                if (dflag.has_value()) {
-                    auto flag = dflag.value();
-#define X(e, ln, _, __) \
-    if (flag == ln) parse_##e();
-                    FLAG_ENTRY_LIST
-#undef X
-                } else if (sflag.has_value()) {
-                    auto flag = sflag.value();
-#define X(e, _, sn, __) \
-    if (flag == sn) parse_##e();
-                    FLAG_ENTRY_LIST
-#undef X
-                }
-                parsers::skip_whitespace(m_arguments);
-            };
-        } else
-            set_flag(CLI_FLAGS::FLAG_HELP);
+
     };
 
    public:
     args(std::stringstream&& ss)
         : m_arguments{std::move(ss)} {
-        std::ifstream ifs("../config/usage.txt");  // hardcoded for now, TO-DO: either use filesystem or have path in same dir as build.
-        if (ifs.is_open()) {
-            std::stringstream buf;
-            buf << ifs.rdbuf();
-            m_usage = buf.str();
-            ifs.close();
-        } else {
-            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing usage data"}, std::cerr);
-            throw cli_except("Cli couldn't read usage data");
-        }
-    };
+              // std::ifstream ifs("../config/usage.txt");  // hardcoded for now, TO-DO: either use filesystem or have path in same dir as build.
+              // if (ifs.is_open()) {
+              //     std::stringstream buf;
+              //     buf << ifs.rdbuf();
+              //     m_usage = buf.str();
+              //     ifs.close();
+              // } else {
+              //      glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing usage data"}, std::cerr);
+              //     throw cli_except("Cli couldn't read usage data");
+              // }
+          };
     void parse() {
         auto entry_parser = mona::_match("monac", "missing entry")(m_arguments);
         if (!entry_parser.has_value()) {
-            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing monac entry"}, std::cerr);
+            glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing monac entry"}, std::cerr);
             throw cli_except("Cli couldn't find monac entry");
         };
-        parsers::skip_whitespace(m_arguments);
+        parsers::skip_wspace(m_arguments);
         parse_commands();
     };
 

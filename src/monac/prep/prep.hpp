@@ -3,30 +3,35 @@
 #include <iostream>
 #include <istream>
 #include <mona/mona.hpp>
+
+#include "../../utils/parsers.hpp"
 namespace monac::prep {
+using namespace utils;
 // takes an input stream of contents, retains dependencies required by this compilation unit, expands macros, and returns some information needed for the module's dependency phase.
 // the lifetime of this object should never outlive the lifetime of the input stream.
-// the returned string will be the basis of all read only lexical analysis operations (string_view), let RVO handle the string contents on return.
+// the returned info will be the basis of all read only lexical analysis operations (string_view) and parsing, let RVO handle the return contents on return.
 class preprocessor {
     std::istream& m_stream;
+
     struct prep_info {
+        std::string expanded;
         std::vector<std::string> imports;
         std::vector<std::string> exports;
-    };
+    } m_info;
+
+    std::unordered_map<std::string, std::string> define_map;
 
    public:
     preprocessor() = delete;
     preprocessor(std::istream& contents) : m_stream{contents} {};
     preprocessor(const preprocessor&) = default;
     preprocessor(preprocessor&&) = default;
-    preprocessor& operator=(preprocessor&&) = default;
-    preprocessor& operator=(const preprocessor&) = default;
+    preprocessor& operator=(preprocessor&&) = delete;
+    preprocessor& operator=(const preprocessor&) = delete;
     ~preprocessor() = default;
 
-    std::string process() {
-        std::string expanded{""};
-
-        return expanded;
+    prep_info process() {
+        return m_info;
     };
 };
 };  // namespace monac::prep

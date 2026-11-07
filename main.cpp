@@ -4,14 +4,14 @@
 
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
+#include "src/monac/prep/prep.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
         glob::log_info li{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No arguments passed to parse: try `monac --help` for more."};
-        glob::logger::instance().log(li, std::cerr);
+        glob::out.log(li, std::cerr);
         return EXIT_FAILURE;
     }
-
     std::stringstream args;
     for (int i = 1; i < argc; i++) {
         args << argv[i] << ' ';
@@ -20,14 +20,12 @@ int main(int argc, char** argv) {
         cli::args cli{std::move(args)};
         cli.parse();
         auto info = cli.execute();
-        for (const auto& f : info.input_files) {
-            std::ifstream is{f};
-            if (is.is_open()) {
-                // preprocess
-                // module dependency graph (imports and exports)
-            }
-        };
-
+        for (const auto& i : info.input_files) {
+            std::cout << i << std::endl;
+        }
+        if (!info.output.empty()) std::cout << "HERE: " << info.output << std::endl;
+        // preprocess
+        // module dependency graph (imports and exports)
         // lex
         // parse
         // type check
@@ -38,6 +36,6 @@ int main(int argc, char** argv) {
         std::cerr << e.get_reason() << std::endl;
     }
 
-    glob::logger::instance().report();
+    glob::out.report();
     return EXIT_SUCCESS;
 };

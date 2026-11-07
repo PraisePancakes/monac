@@ -53,3 +53,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 message(STATUS  "*")
 message(STATUS  "* ${PROJECT_NAME} v${PROJECT_VERSION} (${CMAKE_BUILD_TYPE})")
 message(STATUS  "*")
+
+
+option(MONAC_BUILD_DEV "Build the developement bed" ON)
+if(MONAC_BUILD_DEV)
+    option(MONAC_BUILD_TESTS "Build Monac tests" ON)
+    if(MONAC_BUILD_TESTS)
+        enable_testing()
+        add_subdirectory(tests)
+    endif()
+  
+endif()

@@ -69,5 +69,6 @@ class logger final : public singleton<logger> {
     ~logger() {};
 };
 
+static logger& out = logger::instance();
 };  // namespace glob
 #endif

@@ -1,33 +1,25 @@
 #ifndef PARSERS_HPP
 #define PARSERS_HPP
+#include <filesystem>
 #include <mona/mona.hpp>
-namespace cli::parsers {
+namespace utils::parsers {
+namespace _internals {
+inline auto skip_wspace_parser = mona::_many_or_none(mona::_either(mona::_match(' '), mona::_match('\t')));
+inline auto single_flag_parser = (mona::_match('-') >> mona::_letter());
+inline auto double_flag_parser = (mona::_match("--") >> mona::_alnums());
 
-inline auto skip_whitespace = mona::_transform([](auto v) -> std::string { return " "; }, mona::_many_or_none(mona::_match(' ')));
-
-inline auto file_parser = mona::_transform([](auto tup) -> std::string { auto [_, n, d, e, _] = tup; return n + d + e; },
-                                           mona::_sequence(skip_whitespace, mona::_alnum("expected filename"), mona::_match('.', "expected file separator"), mona::_either(mona::_match("mm "), mona::_match("mx ")), skip_whitespace));
-inline auto double_flag_parser = mona::_transform([](auto tup) -> std::string {
-    std::string flag{""};
-    auto [_, vec] = tup;
-    for (const auto& c : vec) {
-        flag.append(c);
-    }
-    return flag;
+}  // namespace _internals
+inline auto skip_wspace = mona::_transform([](auto) -> std::string { return ""; }, _internals::skip_wspace_parser);
+inline auto single_flag = mona::_transform([](auto pair) -> char {
+    return pair.second;
 },
-                                                  mona::_sequence(mona::_match("--"), mona::_many_or_one(mona::_alnum())));
-
-inline auto single_flag_parser = mona::_transform([](auto tup) -> char {
-    auto [_, c] = tup;
-    return c;
+                                           _internals::single_flag_parser);
+inline auto double_flag = mona::_transform([](auto pair) -> std::string {
+    std::string s{""};
+    s += pair.second;
+    return s;
 },
-                                                  mona::_sequence(mona::_match("-"), mona::_letter()));
+                                           _internals::double_flag_parser);
 
-inline auto string_parser = mona::_transform([](auto vec) -> std::string {
-    std::string res{""};
-    for (const auto& c : vec) res.append(c);
-    return res;
-},
-                                             mona::_many_or_one(mona::_alnum()));
-};  // namespace cli::parsers
+};  // namespace utils::parsers
 #endif
