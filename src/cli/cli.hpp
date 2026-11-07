@@ -48,11 +48,54 @@ class args final {
     bool is_set(CLI_FLAGS flag) {
         return (m_flags & static_cast<flag_t>(flag));
     }
+    bool any_set() {
+#define X(e, _, __, v) \
+    if (is_set(CLI_FLAGS::e)) return true;
+        FLAG_ENTRY_LIST
+#undef X
+        return false;
+    };
+    bool valid_flag(const std::string& s) {
+#define X(_, ln, __, ___) \
+    if (s == ln) return true;
+        FLAG_ENTRY_LIST
+#undef X
+        return false;
+    };
+    bool valid_flag(const char c) {
+#define X(_, __, sn, ___) \
+    if (c == sn) return true;
+        FLAG_ENTRY_LIST
+#undef X
+        return false;
+    };
     void parse_FLAG_INPUT() {
         set_flag(CLI_FLAGS::FLAG_INPUT);
+        while (!mona::_eof()(m_arguments)) {
+            parsers::skip_wspace(m_arguments);
+            auto sng = mona::_check(parsers::single_flag)(m_arguments);
+            auto dub = mona::_check(parsers::double_flag)(m_arguments);
+            if (sng.has_value() || dub.has_value()) break;
+            auto file = parsers::file(m_arguments);
+            if (file.has_value()) m_info.input_files.push_back(file.value());
+            parsers::skip_wspace(m_arguments);
+        }
     };
     void parse_FLAG_OUTPUT() {
         set_flag(CLI_FLAGS::FLAG_OUTPUT);
+        parsers::skip_wspace(m_arguments);
+        auto sng = mona::_check(parsers::single_flag)(m_arguments);
+        auto dub = mona::_check(parsers::double_flag)(m_arguments);
+        if (sng.has_value() || dub.has_value()) {
+            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing output files"}, std::cerr);
+            throw cli_except("Cli couldn't parse output files");
+        };
+        auto op = mona::_symbols_ex(' ')(m_arguments);
+        if (!op.has_value()) {
+            glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Unknown Symbol"}, std::cerr);
+            throw cli_except("Cli couldn't parse output files");
+        }
+        m_info.output = op.value();
     };
     void parse_FLAG_HELP() {
         set_flag(CLI_FLAGS::FLAG_HELP);
@@ -61,25 +104,52 @@ class args final {
         set_flag(CLI_FLAGS::FLAG_VERSION);
     }
 
-    void parse_commands() {
-        // don't touch this, x-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
+    void parse_command() {
+        // don't touch this. X-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
+        parsers::skip_wspace(m_arguments);
+        auto before = m_arguments.tellg();
+        // must parse some options
+        auto sng = parsers::single_flag(m_arguments);
+        auto dub = parsers::double_flag(m_arguments);
+        if (dub.has_value()) {
+            auto flag = dub.value();
+            if (!valid_flag(flag)) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Command: '{}' is not valid", flag)}, std::cerr);
+                throw cli_except("Unkown command");
+            }
+#define X(e, ln, _, __) \
+    if (flag == ln) parse_##e();
+            FLAG_ENTRY_LIST
+#undef X
+        } else if (sng.has_value()) {
+            auto flag = sng.value();
+            if (!valid_flag(flag)) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Command: '{}' is not valid", flag)}, std::cerr);
+                throw cli_except("Unkown command");
+            }
+#define X(e, _, sn, __) \
+    if (flag == sn) parse_##e();
+            FLAG_ENTRY_LIST
+#undef X
+        }
 
+        parsers::skip_wspace(m_arguments);
     };
 
    public:
     args(std::stringstream&& ss)
         : m_arguments{std::move(ss)} {
-              // std::ifstream ifs("../config/usage.txt");  // hardcoded for now, TO-DO: either use filesystem or have path in same dir as build.
-              // if (ifs.is_open()) {
-              //     std::stringstream buf;
-              //     buf << ifs.rdbuf();
-              //     m_usage = buf.str();
-              //     ifs.close();
-              // } else {
-              //      glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing usage data"}, std::cerr);
-              //     throw cli_except("Cli couldn't read usage data");
-              // }
-          };
+        std::ifstream ifs(USAGE_FILE_PATH);
+        if (ifs.is_open()) {
+            std::stringstream buf;
+            buf << ifs.rdbuf();
+            m_usage = buf.str();
+            ifs.close();
+        } else {
+            glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing usage data"}, std::cerr);
+            throw cli_except("Cli couldn't read usage data");
+        }
+    };
     void parse() {
         auto entry_parser = mona::_match("monac", "missing entry")(m_arguments);
         if (!entry_parser.has_value()) {
@@ -87,7 +157,13 @@ class args final {
             throw cli_except("Cli couldn't find monac entry");
         };
         parsers::skip_wspace(m_arguments);
-        parse_commands();
+        while (!mona::_eof()(m_arguments))
+            parse_command();
+
+        if (!any_set()) {
+            glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No commands or unknown commands were inputted see 'monac --help' for more."}, std::cerr);
+            throw cli_except("Cli couldn't parse commands");
+        }
     };
 
     cli_info execute() {

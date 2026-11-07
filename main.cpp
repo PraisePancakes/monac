@@ -21,9 +21,8 @@ int main(int argc, char** argv) {
         cli.parse();
         auto info = cli.execute();
         for (const auto& i : info.input_files) {
-            std::cout << i << std::endl;
+            
         }
-        if (!info.output.empty()) std::cout << "HERE: " << info.output << std::endl;
         // preprocess
         // module dependency graph (imports and exports)
         // lex

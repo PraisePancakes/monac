@@ -48,7 +48,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 )
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-    PROJECT_ROOT="${CMAKE_SOURCE_DIR}"
+    PROJECT_ROOT="${PROJECT_SOURCE_DIR}"
+    USAGE_FILE_PATH="${PROJECT_SOURCE_DIR}/config/usage.txt"
 )
 message(STATUS  "*")
 message(STATUS  "* ${PROJECT_NAME} v${PROJECT_VERSION} (${CMAKE_BUILD_TYPE})")

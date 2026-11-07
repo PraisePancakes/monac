@@ -21,5 +21,7 @@ inline auto double_flag = mona::_transform([](auto pair) -> std::string {
 },
                                            _internals::double_flag_parser);
 
+inline auto file = mona::_symbols_ex(' ');
+
 };  // namespace utils::parsers
 #endif

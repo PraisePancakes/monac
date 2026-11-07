@@ -1,13 +1,13 @@
 ==== Monac ===
    [[USAGE]]
-monac [options] file...
+monac <options...>
 Options:
     --help                                      (-h)    Display Usage.
     --version                                   (-v)    Display Version.
     --vlex <input_file> [output_file]           (-l)    Dumps tokens from input file into output file, if no output file, dumps it to stdout.
     --vast <input_file> [output_file]           (-p)    Dumps ast from input file into output file, if no output file, dumps it to stdout.
     --vasm <input_file> [output_file]           (-a)    Dumps generated assembly from input file into output file, if no output file, dumps it to stdout.
-    --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name> if no name is given, monac is free to create a default (named "default") executable.
+    --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name>, defaults to "default".
     --input  <input_file...>                    (-i)    Pipe a variadic list of input files to be compiled.
 EXAMPLES:
     monac --input input.mx
