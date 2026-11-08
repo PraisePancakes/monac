@@ -34,12 +34,17 @@ int main(int argc, char** argv) {
             std::cout << i << std::endl;
         }
 #endif
-        // remember input files will always be source files.
-        // preprocess
-        // module dependency graph (imports and exports)
+
+        // preprocess (go through every file .mm/.mx and expand macro defs)
+        // mds (module dependancy schedular)
+        //  * go through all modules
+        //  * set up the DAG, sort them topologically
+        // bmi (built module interface) keep in outer scope so once we build source files we can retrieve symbols from here
+        //  * recieve the sorted DAG
+        //  * go through each module and build them (set up symbol table {exports, imports, sealed, etc..})
         // lex
         // parse
-        // type check
+        // static analysis
         // whatever the f*ck else
         // generate asm
         // link
