@@ -10,8 +10,7 @@ FetchContent_MakeAvailable(doctest)
 
 add_executable(monac_tests
 main.cpp
-skip_wspace.cpp
-flags.cpp
+unit_parsers.cpp
 )
 
 target_compile_options(monac_tests PRIVATE

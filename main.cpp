@@ -21,9 +21,13 @@ int main(int argc, char** argv) {
         cli.parse();
         auto info = cli.execute();
         for (const auto& i : info.input_files) {
+            {
+                std::ifstream ifs{i};
+                // preprocess
+                // module dependency graph (imports and exports)
+            }
         }
-        // preprocess
-        // module dependency graph (imports and exports)
+
         // lex
         // parse
         // type check
