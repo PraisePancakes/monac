@@ -25,7 +25,8 @@ class cli_except final : public std::exception {
     X(FLAG_HELP, "help", 'h', 1 << 0)       \
     X(FLAG_VERSION, "version", 'v', 1 << 1) \
     X(FLAG_OUTPUT, "output", 'o', 1 << 2)   \
-    X(FLAG_INPUT, "input", 'i', 1 << 3)
+    X(FLAG_INPUT, "input", 'i', 1 << 3)     \
+    X(FLAG_MODULE, "module", 'm', 1 << 4)
 
 class args final {
     using flag_t = std::uint8_t;
@@ -39,7 +40,8 @@ class args final {
     flag_t m_flags{0};
 
     struct cli_info {
-        std::vector<std::string> input_files;
+        std::vector<std::filesystem::path> input_paths;
+        std::vector<std::filesystem::path> module_paths;
         std::string output;
     } m_info;
     void set_flag(CLI_FLAGS flag) {
@@ -76,8 +78,17 @@ class args final {
             auto sng = mona::_check(parsers::single_flag)(m_arguments);
             auto dub = mona::_check(parsers::double_flag)(m_arguments);
             if (sng.has_value() || dub.has_value()) break;
-            auto file = parsers::file(m_arguments);
-            if (file.has_value()) m_info.input_files.push_back(file.value());
+            auto file = parsers::directory(m_arguments);
+            std::filesystem::path fp{file.value()};
+            if (!std::filesystem::exists(fp) || !fp.has_extension()) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined input path: {}", fp.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            }
+            if (fp.extension() != ".mx") {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined extension: input file {} requires an .mx extension", fp.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            }
+            if (file.has_value()) m_info.input_paths.push_back(fp);
             parsers::skip_wspace(m_arguments);
         }
     };
@@ -96,6 +107,24 @@ class args final {
             throw cli_except("Cli couldn't parse output files");
         }
         m_info.output = op.value();
+    };
+
+    void parse_FLAG_MODULE() {
+        set_flag(CLI_FLAGS::FLAG_MODULE);
+        while (!mona::_eof()(m_arguments)) {
+            parsers::skip_wspace(m_arguments);
+            auto sng = mona::_check(parsers::single_flag)(m_arguments);
+            auto dub = mona::_check(parsers::double_flag)(m_arguments);
+            if (sng.has_value() || dub.has_value()) break;
+            auto file = parsers::directory(m_arguments);
+            std::filesystem::path fp{file.value()};
+            if (!std::filesystem::exists(fp)) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined module path: {}", fp.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            }
+            if (file.has_value()) m_info.module_paths.push_back(fp);
+            parsers::skip_wspace(m_arguments);
+        }
     };
     void parse_FLAG_HELP() {
         set_flag(CLI_FLAGS::FLAG_HELP);

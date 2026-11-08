@@ -36,6 +36,22 @@ TEST_SUITE("Unit Parsers") {
         }
     }
 
+    TEST_CASE("Directory") {
+        SUBCASE("Directory passes") {
+            std::stringstream ss{".././test/testing/test123.mx"};
+            auto v = utils::parsers::directory(ss);
+            REQUIRE(v.has_value());
+            CHECK(v.value() == ".././test/testing/test123.mx");
+        };
+
+        SUBCASE("Directory passes") {
+            std::stringstream ss{".././test/   testing/test123.mx"};
+            auto v = utils::parsers::directory(ss);
+            REQUIRE(v.has_value());
+            CHECK(v.value() == ".././test/");
+        };
+    }
+
     TEST_CASE("Flags") {
         SUBCASE("Flags single") {
             std::stringstream ss{"-t"};

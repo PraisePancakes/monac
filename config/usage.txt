@@ -9,11 +9,13 @@ Options:
     --vasm <input_file> [output_file]           (-a)    Dumps generated assembly from input file into output file, if no output file, dumps it to stdout.
     --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name>, defaults to "default".
     --input  <input_file...>                    (-i)    Pipe a variadic list of input files to be compiled.
+    --module <path_to_module_folder/file...>    (-m)    Pipe a variadic list of module paths to be compiled. (NOTE: if a program is modular, you must include this).
 EXAMPLES:
     monac --input input.mx
     monac -o output -i input.mx
     monac --vlex input.mx
     monac --vast input.mx ast.txt
     monac --vasm input.mx assembly.s
+    monac -o output -i input.mx -m path/to/module
 
 

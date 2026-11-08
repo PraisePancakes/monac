@@ -1,0 +1,8 @@
+import module Math;
+
+
+func main(x: i32, y: char**) -> i32 {
+    mut x: i32 = Math.add(x, y);
+    x *= 2;
+    return 0;
+}

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "src/cfg/dev.hpp"
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
 #include "src/monac/prep/prep.hpp"
@@ -20,14 +21,22 @@ int main(int argc, char** argv) {
         cli::args cli{std::move(args)};
         cli.parse();
         auto info = cli.execute();
-        for (const auto& i : info.input_files) {
-            {
-                std::ifstream ifs{i};
-                // preprocess
-                // module dependency graph (imports and exports)
-            }
+#if defined(DEV_PEDANTIC) && DEV_PEDANTIC
+        std::cout << "modules: " << std::endl;
+        for (const auto& m : info.module_paths) {
+            std::cout << m << std::endl;
         }
+#endif
 
+#if defined(DEV_PEDANTIC) && DEV_PEDANTIC
+        std::cout << "inputs (source): " << std::endl;
+        for (const auto& i : info.input_paths) {
+            std::cout << i << std::endl;
+        }
+#endif
+        // remember input files will always be source files.
+        // preprocess
+        // module dependency graph (imports and exports)
         // lex
         // parse
         // type check

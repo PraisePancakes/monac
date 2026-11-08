@@ -14,9 +14,6 @@ class preprocessor {
     std::istream& m_stream;
 
     struct prep_info {
-        std::string expanded;
-        std::vector<std::string> imports;
-        std::vector<std::string> exports;
     } m_info;
 
     std::unordered_map<std::string, std::string> define_map;
@@ -31,6 +28,8 @@ class preprocessor {
     ~preprocessor() = default;
 
     prep_info process() {
+        // first we should always check on export module at the top of the file, modules will always have export module at the top.
+
         return m_info;
     };
 };

@@ -23,7 +23,7 @@ inline auto double_flag = mona::_transform([](auto pair) -> std::string {
 },
                                            _internals::double_flag_parser);
 
-inline auto file = mona::_symbols_ex(' ');
+inline auto directory = mona::_symbols_ex(' ');
 
 inline auto identifier = mona::_transform([](auto tup) -> std::string {
     std::string s{""};
@@ -40,6 +40,18 @@ inline auto define = mona::_transform([](auto tup) -> std::pair<std::string, std
     return std::make_pair(ident, text);
 },
                                       define_parser);
+
+inline auto export_module = mona::_transform([](auto tup) -> std::string {
+    auto [_, _, _, _, ident] = tup;
+    return ident;
+},
+                                             mona::_sequence(mona::_match("export"), skip_wspace, mona::_match("module"), skip_wspace, identifier));
+
+inline auto import_module = mona::_transform([](auto tup) -> std::string {
+    auto [_, _, _, _, ident] = tup;
+    return ident;
+},
+                                             mona::_sequence(mona::_match("import"), skip_wspace, mona::_match("module"), skip_wspace, identifier));
 
 };  // namespace utils::parsers
 #endif
