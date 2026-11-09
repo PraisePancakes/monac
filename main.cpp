@@ -36,6 +36,23 @@ int main(int argc, char** argv) {
 #endif
 
         // preprocess (go through every file .mm/.mx and expand macro defs)
+        for (const auto& path : info.module_paths) {
+            auto files = monac::prep::preprocessor::resolve_directory(path);
+            for (const auto& f : files) {
+                {
+                    std::ifstream ifs{f};
+                    std::stringstream ss;
+                    ss << ifs.rdbuf();
+                    monac::prep::preprocessor prep{ss};
+                    auto info = prep.process();
+                    std::cout << info.expanded << std::endl;
+                }
+            }
+        }
+
+        for (const auto& path : info.input_paths) {
+        }
+
         // mds (module dependancy schedular)
         //  * go through all modules
         //  * set up the DAG, sort them topologically

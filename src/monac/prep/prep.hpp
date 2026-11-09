@@ -14,9 +14,16 @@ class preprocessor {
     std::istream& m_stream;
 
     struct prep_info {
+        std::string expanded;
     } m_info;
 
     std::unordered_map<std::string, std::string> define_map;
+    static std::vector<std::filesystem::path> append_to(const std::vector<std::filesystem::path>& part, std::vector<std::filesystem::path>& total) {
+        for (auto p : part) {
+            total.push_back(p);
+        }
+        return total;
+    }
 
    public:
     preprocessor() = delete;
@@ -27,8 +34,32 @@ class preprocessor {
     preprocessor& operator=(const preprocessor&) = delete;
     ~preprocessor() = default;
 
+    static std::vector<std::filesystem::path> resolve_directory(std::filesystem::path dir) {
+        std::vector<std::filesystem::path> files;
+        if (dir.has_stem()) {
+            append_to(resolve_directory(dir.stem()), files);
+        } else {
+            files.push_back(dir);
+        }
+        return files;
+    };
+
     prep_info process() {
-        // first we should always check on export module at the top of the file, modules will always have export module at the top.
+        // don't worry about import/exports. This class will only handle macro replacements (for now) and eventually expansions.
+        while (!mona::_eof()(m_stream)) {
+            auto define = parsers::define(m_stream);
+            auto ident = parsers::identifier(m_stream);
+            if (define.has_value()) {
+                auto v = define.value();
+                define_map[v.first] = v.second;
+            } else if (ident.has_value()) {
+                if (define_map.contains(ident.value())) {
+                    m_info.expanded += ident.value();
+                }
+            } else {
+                m_info.expanded += m_stream.get();
+            }
+        };
 
         return m_info;
     };
