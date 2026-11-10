@@ -11,6 +11,7 @@ FetchContent_MakeAvailable(doctest)
 add_executable(monac_tests
 main.cpp
 unit_parsers.cpp
+directory.cpp
 )
 
 target_compile_options(monac_tests PRIVATE

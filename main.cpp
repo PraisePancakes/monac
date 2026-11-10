@@ -6,6 +6,7 @@
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
 #include "src/monac/prep/prep.hpp"
+#include "src/utils/directory_manager.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -37,15 +38,22 @@ int main(int argc, char** argv) {
 
         // preprocess (go through every file .mm/.mx and expand macro defs)
         for (const auto& path : info.module_paths) {
-            auto files = monac::prep::preprocessor::resolve_directory(path);
+            utils::fs::directory_manager dm{path};
+            auto files = dm.resolve_directory();
+            if (!utils::fs::directory_manager::validate_extension(files, ".mm", ".mx")) {
+                std::cout << "error validating extension." << std::endl;  // handle dis better
+            };
             for (const auto& f : files) {
                 {
                     std::ifstream ifs{f};
-                    std::stringstream ss;
-                    ss << ifs.rdbuf();
-                    monac::prep::preprocessor prep{ss};
-                    auto info = prep.process();
-                    std::cout << info.expanded << std::endl;
+                    if (ifs.is_open()) {
+                        std::stringstream ss;
+                        ss << ifs.rdbuf();
+                        monac::prep::preprocessor prep{ss};
+                        auto info = prep.process();
+                        std::cout << info.expanded << std::endl;
+                    } else {
+                    }
                 }
             }
         }

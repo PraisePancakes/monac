@@ -18,12 +18,6 @@ class preprocessor {
     } m_info;
 
     std::unordered_map<std::string, std::string> define_map;
-    static std::vector<std::filesystem::path> append_to(const std::vector<std::filesystem::path>& part, std::vector<std::filesystem::path>& total) {
-        for (auto p : part) {
-            total.push_back(p);
-        }
-        return total;
-    }
 
    public:
     preprocessor() = delete;
@@ -33,16 +27,6 @@ class preprocessor {
     preprocessor& operator=(preprocessor&&) = delete;
     preprocessor& operator=(const preprocessor&) = delete;
     ~preprocessor() = default;
-
-    static std::vector<std::filesystem::path> resolve_directory(std::filesystem::path dir) {
-        std::vector<std::filesystem::path> files;
-        if (dir.has_stem()) {
-            append_to(resolve_directory(dir.stem()), files);
-        } else {
-            files.push_back(dir);
-        }
-        return files;
-    };
 
     prep_info process() {
         // don't worry about import/exports. This class will only handle macro replacements (for now) and eventually expansions.
