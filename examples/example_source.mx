@@ -1,8 +1,8 @@
 import module Math;
-
+#define FACTOR 5
 
 func main(x: i32, y: char**) -> i32 {
     mut x: i32 = Math.add(x, y);
-    x *= 2;
+    x *= FACTOR;
     return 0;
 }

@@ -42,6 +42,7 @@ class args final {
     struct cli_info {
         std::vector<std::filesystem::path> input_paths;
         std::vector<std::filesystem::path> module_paths;
+        std::vector<std::filesystem::path> all_paths;
         std::string output;
     } m_info;
     void set_flag(CLI_FLAGS flag) {
@@ -88,7 +89,10 @@ class args final {
                 glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined extension: input file {} requires an .mx extension", fp.string())}, std::cerr);
                 throw cli_except("Cli couldn't find input files");
             }
-            if (file.has_value()) m_info.input_paths.push_back(fp);
+            if (file.has_value()) {
+                m_info.input_paths.push_back(fp);
+                m_info.all_paths.push_back(fp);
+            }
             parsers::skip_wspace(m_arguments);
         }
     };
@@ -122,7 +126,10 @@ class args final {
                 glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined module path: {}", fp.string())}, std::cerr);
                 throw cli_except("Cli couldn't find input files");
             }
-            if (file.has_value()) m_info.module_paths.push_back(fp);
+            if (file.has_value()) {
+                m_info.module_paths.push_back(fp);
+                m_info.all_paths.push_back(fp);
+            }
             parsers::skip_wspace(m_arguments);
         }
     };

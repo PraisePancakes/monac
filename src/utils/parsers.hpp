@@ -8,7 +8,7 @@ namespace _internals {
 inline auto skip_wspace_parser = mona::_many_or_none(mona::_either(mona::_match(' '), mona::_match('\t')));
 inline auto single_flag_parser = (mona::_match('-') >> mona::_letter());
 inline auto double_flag_parser = (mona::_match("--") >> mona::_alnums());
-inline auto identifier_parser = mona::_sequence(mona::_letter(), mona::_symbols_ex(' ', '\n', '\r', '+', '!', '@', '#', '%', '^', '&', '(', ')', '-', '=', '+', '*'));
+inline auto identifier_parser = mona::_sequence(mona::_letter(), mona::_symbols_ex(' ', '\n', '\r', '+', '!', '@', '#', '%', '^', '&', '(', ')', '-', '=', '+', '*', ';'));
 
 }  // namespace _internals
 inline auto skip_wspace = mona::_transform([](auto) -> std::string { return ""; }, _internals::skip_wspace_parser);

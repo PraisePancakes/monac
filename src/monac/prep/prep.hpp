@@ -37,11 +37,12 @@ class preprocessor {
                 auto v = define.value();
                 define_map[v.first] = v.second;
             } else if (ident.has_value()) {
-                if (define_map.contains(ident.value())) {
+                if (define_map.contains(ident.value()))
+                    m_info.expanded += define_map[ident.value()];
+                else
                     m_info.expanded += ident.value();
-                }
             } else {
-                m_info.expanded += m_stream.get();
+                m_info.expanded += static_cast<char>(m_stream.get());
             }
         };
 

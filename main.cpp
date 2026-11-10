@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 #endif
 
         // preprocess (go through every file .mm/.mx and expand macro defs)
-        for (const auto& path : info.module_paths) {
+        for (const auto& path : info.all_paths) {
             utils::fs::directory_manager dm{path};
             auto files = dm.resolve_directory();
             if (!utils::fs::directory_manager::validate_extension(files, ".mm", ".mx")) {
@@ -53,12 +53,10 @@ int main(int argc, char** argv) {
                         auto info = prep.process();
                         std::cout << info.expanded << std::endl;
                     } else {
+                        std::cout << "ERR";
                     }
                 }
             }
-        }
-
-        for (const auto& path : info.input_paths) {
         }
 
         // mds (module dependancy schedular)

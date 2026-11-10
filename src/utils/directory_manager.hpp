@@ -38,7 +38,7 @@ class directory_manager final {
         requires(std::is_convertible_v<Args, std::string_view> && ...)
     static bool validate_extension(const std::vector<std::filesystem::path>& files, Args&&... extensions) {
         for (const auto& f : files) {
-            if (((f.extension() != std::forward<Args>(extensions)) || ...)) {
+            if (((f.extension() != std::forward<Args>(extensions)) && ...)) {
                 return false;
             }
         }
