@@ -4,7 +4,7 @@
 #include "doctest.h"
 TEST_SUITE("Directory Manager") {
     TEST_CASE("Directory Manager flattens directory to vector of file paths") {
-        std::filesystem::path mock_dir{"../../tests/mock_dir"};
+        std::filesystem::path mock_dir{"../tests/mock_dir"};
         REQUIRE(std::filesystem::exists(mock_dir));
         REQUIRE(std::filesystem::is_directory(mock_dir));
 
