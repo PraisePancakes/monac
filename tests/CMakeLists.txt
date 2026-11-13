@@ -13,6 +13,8 @@ main.cpp
 unit_parsers.cpp
 directory.cpp
 prep/prep.cpp
+prep/normalizer.cpp
+cli.cpp
 )
 
 target_compile_options(monac_tests PRIVATE

@@ -5,6 +5,7 @@
 #include "src/cfg/dev.hpp"
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
+#include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
 #include "src/utils/directory_manager.hpp"
 
@@ -49,7 +50,7 @@ int main(int argc, char** argv) {
                     if (ifs.is_open()) {
                         std::stringstream ss;
                         ss << ifs.rdbuf();
-                        monac::prep::preprocessor prep{ss};
+                        monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                         auto info = prep.process();
                         std::cout << info.expanded << std::endl;
                     } else {

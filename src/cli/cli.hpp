@@ -5,7 +5,8 @@
 
 #include "../cfg/version.hpp"
 #include "../globals/logger.hpp"
-#include "../utils/parsers.hpp"
+#include "../utils/unit_parsers.hpp"
+#include "parsers.hpp"
 
 namespace cli {
 using namespace utils;
@@ -75,7 +76,7 @@ class args final {
     void parse_FLAG_INPUT() {
         set_flag(CLI_FLAGS::FLAG_INPUT);
         while (!mona::_eof()(m_arguments)) {
-            parsers::skip_wspace(m_arguments);
+            unit::opt_white_space(m_arguments);
             auto sng = mona::_check(parsers::single_flag)(m_arguments);
             auto dub = mona::_check(parsers::double_flag)(m_arguments);
             if (sng.has_value() || dub.has_value()) break;
@@ -93,12 +94,12 @@ class args final {
                 m_info.input_paths.push_back(fp);
                 m_info.all_paths.push_back(fp);
             }
-            parsers::skip_wspace(m_arguments);
+            unit::opt_white_space(m_arguments);
         }
     };
     void parse_FLAG_OUTPUT() {
         set_flag(CLI_FLAGS::FLAG_OUTPUT);
-        parsers::skip_wspace(m_arguments);
+        unit::opt_white_space(m_arguments);
         auto sng = mona::_check(parsers::single_flag)(m_arguments);
         auto dub = mona::_check(parsers::double_flag)(m_arguments);
         if (sng.has_value() || dub.has_value()) {
@@ -116,7 +117,7 @@ class args final {
     void parse_FLAG_MODULE() {
         set_flag(CLI_FLAGS::FLAG_MODULE);
         while (!mona::_eof()(m_arguments)) {
-            parsers::skip_wspace(m_arguments);
+            unit::opt_white_space(m_arguments);
             auto sng = mona::_check(parsers::single_flag)(m_arguments);
             auto dub = mona::_check(parsers::double_flag)(m_arguments);
             if (sng.has_value() || dub.has_value()) break;
@@ -130,7 +131,7 @@ class args final {
                 m_info.module_paths.push_back(fp);
                 m_info.all_paths.push_back(fp);
             }
-            parsers::skip_wspace(m_arguments);
+            unit::opt_white_space(m_arguments);
         }
     };
     void parse_FLAG_HELP() {
@@ -142,7 +143,7 @@ class args final {
 
     void parse_command() {
         // don't touch this. X-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
-        parsers::skip_wspace(m_arguments);
+        unit::opt_white_space(m_arguments);
         auto before = m_arguments.tellg();
         // must parse some options
         auto sng = parsers::single_flag(m_arguments);
@@ -169,7 +170,7 @@ class args final {
 #undef X
         }
 
-        parsers::skip_wspace(m_arguments);
+        unit::opt_white_space(m_arguments);
     };
 
    public:
@@ -192,7 +193,7 @@ class args final {
             glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing monac entry"}, std::cerr);
             throw cli_except("Cli couldn't find monac entry");
         };
-        parsers::skip_wspace(m_arguments);
+        unit::opt_white_space(m_arguments);
         while (!mona::_eof()(m_arguments))
             parse_command();
     };

@@ -3,14 +3,13 @@
 <directive> ::= "@" <directive-part> <newline>
 <directive-part> ::= <define> | <undef> | <conditional-part>
 <define> ::= "define" <whitespace> <macro-definition>
-<macro-definition> ::= (<identifier> <opt-continuation> <replacement-list>) | (<function-like> <opt-continuation> <replacement-list>)
-<opt-continuation> ::= <opt-whitespace> "\" <new-line> <opt-whitespace> <opt-continuation>  | ""
+<macro-definition> ::= (<identifier> <replacement-list>) | (<function-like>  <replacement-list>)
 <function-like> ::= <identifier> "(" <opt-args-list> ")"
 <opt-args-list> ::= <args-list> | ""
 <args-list> ::= <identifier>| <identifier> "," <args-list>
 <undef> ::= "undef" <whitespace> <identifier>
 
-<replacement-list> ::= <replacement-token> <opt-continuation> <replacement-list> | ""
+<replacement-list> ::= <replacement-token> <replacement-list> | ""
 
 <replacement-token> ::= <identifier> | <number> | <string-literal> | <punctuator>
 <newline> ::= "\r\n" | "\n" | "\r"
