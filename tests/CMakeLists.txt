@@ -12,6 +12,7 @@ add_executable(monac_tests
 main.cpp
 unit_parsers.cpp
 directory.cpp
+prep/prep.cpp
 )
 
 target_compile_options(monac_tests PRIVATE

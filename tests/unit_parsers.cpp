@@ -1,11 +1,14 @@
+#include <sstream>
+
+#include "../src/monac/prep/parsers.hpp"
 #include "../src/utils/parsers.hpp"
 #include "doctest.h"
-
 TEST_SUITE("Unit Parsers") {
+    using namespace monac::prep::unit;
     TEST_CASE("wspace") {
         SUBCASE("Skipping wspace") {
             std::stringstream ss{"    t"};
-            auto v = utils::parsers::skip_wspace(ss);
+            auto v = opt_white_space(ss);
             REQUIRE(v.has_value());
             CHECK(v.value() == "");
             CHECK(ss.peek() == 't');
@@ -13,7 +16,7 @@ TEST_SUITE("Unit Parsers") {
 
         SUBCASE("Skipping tabspace") {
             std::stringstream ss{"  t"};
-            auto v = utils::parsers::skip_wspace(ss);
+            auto v = opt_white_space(ss);
             REQUIRE(v.has_value());
             CHECK(v.value() == "");
             CHECK(ss.peek() == 't');
@@ -21,7 +24,7 @@ TEST_SUITE("Unit Parsers") {
 
         SUBCASE("Skipping tabspace encoded") {
             std::stringstream ss{"\tt"};
-            auto v = utils::parsers::skip_wspace(ss);
+            auto v = opt_white_space(ss);
             REQUIRE(v.has_value());
             CHECK(v.value() == "");
             CHECK(ss.peek() == 't');
@@ -29,7 +32,7 @@ TEST_SUITE("Unit Parsers") {
 
         SUBCASE("Skipping no whitespace still holds the parser true") {
             std::stringstream ss{"t"};
-            auto v = utils::parsers::skip_wspace(ss);
+            auto v = opt_white_space(ss);
             REQUIRE(v.has_value());
             CHECK(v.value() == "");
             CHECK(ss.peek() == 't');

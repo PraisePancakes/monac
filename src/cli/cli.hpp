@@ -52,7 +52,7 @@ class args final {
         return (m_flags & static_cast<flag_t>(flag));
     }
     bool any_set() {
-#define X(e, _, __, v) \
+#define X(e, _, __, ___) \
     if (is_set(CLI_FLAGS::e)) return true;
         FLAG_ENTRY_LIST
 #undef X

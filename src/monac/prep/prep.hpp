@@ -4,7 +4,7 @@
 #include <istream>
 #include <mona/mona.hpp>
 
-#include "../../utils/parsers.hpp"
+#include "parsers.hpp"
 namespace monac::prep {
 using namespace utils;
 // takes an input stream of contents, retains dependencies required by this compilation unit, expands macros, and returns some information needed for the module's dependency phase.
@@ -17,7 +17,7 @@ class preprocessor {
         std::string expanded;
     } m_info;
 
-    std::unordered_map<std::string, std::string> define_map;
+    std::unordered_map<std::string, prep::unit::macro_definition> define_map;
 
    public:
     preprocessor() = delete;
@@ -31,14 +31,14 @@ class preprocessor {
     prep_info process() {
         // don't worry about import/exports. This class will only handle macro replacements (for now) and eventually expansions.
         while (!mona::_eof()(m_stream)) {
-            auto define = parsers::define(m_stream);
-            auto ident = parsers::identifier(m_stream);
+            auto define = unit::define(m_stream);
+            auto ident = unit::identifier(m_stream);
             if (define.has_value()) {
                 auto v = define.value();
-                define_map[v.first] = v.second;
+                define_map[v.identifier] = v;
             } else if (ident.has_value()) {
                 if (define_map.contains(ident.value()))
-                    m_info.expanded += define_map[ident.value()];
+                    for (const auto& s : define_map[ident.value()].replacement) m_info.expanded.append(s);
                 else
                     m_info.expanded += ident.value();
             } else {

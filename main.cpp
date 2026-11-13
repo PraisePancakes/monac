@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
                         auto info = prep.process();
                         std::cout << info.expanded << std::endl;
                     } else {
-                        std::cout << "ERR";
+                        std::cout << "ERR";  // handle dis better
                     }
                 }
             }

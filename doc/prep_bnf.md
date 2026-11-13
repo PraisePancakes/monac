@@ -1,0 +1,67 @@
+# BACKUS-NAUR FORM (BNF) OF THE MONAC'S PREPROCESSOR GRAMMAR
+
+<directive> ::= "@" <directive-part> <newline>
+<directive-part> ::= <define> | <undef> | <conditional-part>
+<define> ::= "define" <whitespace> <macro-definition>
+<macro-definition> ::= (<identifier> <opt-continuation> <replacement-list>) | (<function-like> <opt-continuation> <replacement-list>)
+<opt-continuation> ::= <opt-whitespace> "\" <new-line> <opt-whitespace> <opt-continuation>  | ""
+<function-like> ::= <identifier> "(" <opt-args-list> ")"
+<opt-args-list> ::= <args-list> | ""
+<args-list> ::= <identifier>| <identifier> "," <args-list>
+<undef> ::= "undef" <whitespace> <identifier>
+
+<replacement-list> ::= <replacement-token> <opt-continuation> <replacement-list> | ""
+
+<replacement-token> ::= <identifier> | <number> | <string-literal> | <punctuator>
+<newline> ::= "\r\n" | "\n" | "\r"
+<whitespace> ::= " " <whitespace> | "\t" <whitespace> | " "
+<opt-whitespace> ::= <whitespace> | ""
+<conditional-open> ::= <if> | <ifndef> | <ifdef>
+<conditional-part> ::= <conditional-open> <conditional-body> <conditional-opt-else> <endif>
+<conditional-body> ::= <body-element> <conditional-body> | ""
+<body-element> ::= <directive> | <conditional-part>
+<conditional-opt-else> ::= <elif> <conditional-body> <conditional-opt-else> | <else> <conditional-body> | ""
+
+<identifier> ::= <identifier-start> (<identifier-continue>*)
+<identifier-start> ::= <letter> | "_"
+<identifier-continue> ::= <identifier-start> | <digit>
+<letter> ::= "a" | "b" | ... | "z"
+           | "A" | "B" | ... | "Z"
+<number> ::= <integer> | <floating-point>
+<integer> ::= <digit>+
+<floating-point> ::= <digit>+ "." <digit>+ | "." <digit>+ | <digit>+ "." 
+<digit> ::= "0" | "1" | "2" | "3" | "4"
+          | "5" | "6" | "7" | "8" | "9"
+<string-literal> ::= "\"" <string-content> "\""
+
+<string-content> ::= <string-character> <string-content>
+                   | <escape-sequence> <string-content>
+                   | ""
+
+<string-character> ::= any character except "\"", "\\", or "\\n"
+<escape-sequence> ::= "\\" <escape-character>
+<escape-character> ::= "n" | "t" | "r" | "0" | "\\" | "\"" | "'"
+<punctuator> ::= "(" | ")" | "[" | "]" | "{" | "}"
+               | "." | "..." | "," | ";"
+               | ":" | "?" 
+               | "+" | "-" | "*" | "/" | "%"
+               | "&" | "|" | "^" | "~" | "!"
+               | "=" | "<" | ">"
+               | "++" | "--"
+               | "->"
+               | "&&" | "||"
+               | "==" | "!="
+               | "<=" | ">="
+               | "+=" | "-=" | "*=" | "/=" | "%="
+               | "&=" | "|=" | "^="
+               | "<<" | ">>"
+               | "<<=" | ">>="
+               | "##" | "#"
+
+
+
+
+
+
+
+

@@ -64,17 +64,5 @@ inline auto define = mona::_transform([](auto tup) -> std::pair<std::string, std
 },
                                       define_parser);
 
-inline auto export_module = mona::_transform([](auto tup) -> std::string {
-    auto [_, _, _, _, ident] = tup;
-    return ident;
-},
-                                             mona::_sequence(mona::_match("export"), skip_wspace, mona::_match("module"), skip_wspace, identifier));
-
-inline auto import_module = mona::_transform([](auto tup) -> std::string {
-    auto [_, _, _, _, ident] = tup;
-    return ident;
-},
-                                             mona::_sequence(mona::_match("import"), skip_wspace, mona::_match("module"), skip_wspace, identifier));
-
 };  // namespace utils::parsers
 #endif
