@@ -22,8 +22,9 @@ class normalizer {
     std::string process() {
         std::string ret{""};
         while (!mona::_eof()(m_stream)) {
-            if (mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"))(m_stream)) {
-                while (mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"))(m_stream)) {
+            auto skippable_parses = mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"));
+            if (skippable_parses(m_stream)) {
+                while (skippable_parses(m_stream)) {
                 };
                 ret += ' ';
                 continue;
