@@ -1,12 +1,18 @@
 # BACKUS-NAUR FORM (BNF) OF THE MONAC'S PREPROCESSOR GRAMMAR
 
+<macro> ::= <definitive> | <invocative>
+<invocative> ::= <identifier> | <call-like>
+<call-like> ::= <identifier> "(" <opt-whitespace> <opt-args-list> <opt-whitespace> ")"
+<opt-args-list> ::= <args-list> | ""
+<args-list> ::= <opt-whitespace> <replacement-list> <opt-whitespace> |<opt-whitespace> <replacement-list> <opt-whitespace> "," <opt-whitespace> <params-list>
+<definitive> ::= <directive>
 <directive> ::= "@" <directive-part> <newline>
 <directive-part> ::= <define> | <undef> | <conditional-part>
 <define> ::= "define" <whitespace> <macro-definition>
 <macro-definition> ::= (<identifier> <replacement-list>) | (<function-like>  <replacement-list>)
-<function-like> ::= <identifier> "(" <opt-args-list> ")"
-<opt-args-list> ::= <args-list> | ""
-<args-list> ::= <identifier>| <identifier> "," <args-list>
+<function-like> ::= <identifier> "(" <opt-params-list> ")"
+<opt-params-list> ::= <params-list> | ""
+<params-list> ::= <identifier>| <identifier> "," <params-list>
 <undef> ::= "undef" <whitespace> <identifier>
 
 <replacement-list> ::= <replacement-token> <replacement-list> | ""

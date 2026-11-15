@@ -35,14 +35,12 @@ class preprocessor {
         return std::visit(utils::overload{
                               [this](const prep::parsers::object obj) -> std::string {
                                   std::string result{""};
-                                  for (const std::string& s : obj.replacement)
-                                      result.append(visit_macro_replacement(s));
+                                  for (const std::string& s : obj.replacement) result.append(visit_macro_replacement(s));
                                   return result;
                               },
                               [this](const prep::parsers::function func) -> std::string {
                                   std::string result{""};
-                                  for (const std::string& s : func.replacement)
-                                      result.append(visit_macro_replacement(s));
+                                  for (const std::string& s : func.replacement) result.append(visit_macro_replacement(s));
                                   return result;
                               }},
                           macro_map.at(key));
@@ -55,12 +53,10 @@ class preprocessor {
         }
         std::visit(utils::overload{
                        [this](prep::parsers::object& obj) {
-                           for (const auto& s : obj.replacement)
-                               m_info.expanded.append(visit_macro_replacement(s));
+                           for (const auto& s : obj.replacement) m_info.expanded.append(visit_macro_replacement(s));
                        },
                        [this](prep::parsers::function& func) {
-                           for (const auto& s : func.replacement)
-                               m_info.expanded.append(visit_macro_replacement(s));
+                           for (const auto& s : func.replacement) m_info.expanded.append(visit_macro_replacement(s));
                        }},
                    macro_map[key]);
     };
