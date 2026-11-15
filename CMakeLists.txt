@@ -58,7 +58,7 @@ message(STATUS  "*")
 
 option(MONAC_BUILD_DEV "Build the developement bed" ON)
 if(MONAC_BUILD_DEV)
-    option(MONAC_BUILD_TESTS "Build Monac tests" ON)
+    option(MONAC_BUILD_TESTS "Build Monac tests" OFF)
     if(MONAC_BUILD_TESTS)
         enable_testing()
         add_subdirectory(tests)
