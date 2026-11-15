@@ -6,7 +6,7 @@
 <call-like> ::= <identifier> "(" <opt-whitespace> <opt-args-list> <opt-whitespace> ")"
 <opt-args-list> ::= <args-list> | ""
 <args-value> ::= <replacement_list> | <call-like>
-<args-list> ::= <opt-whitespace> <args-value> <opt-whitespace> |<opt-whitespace> <args-value> <opt-whitespace> "," <opt-whitespace> <args-list>
+<args-list> ::= <args-value> ("," <opt-whitespace> <args-value>)*
 <definitive> ::= <directive>
 <directive> ::= "@" <directive-part> <newline>
 <directive-part> ::= <define> | <undef> | <conditional-part>
