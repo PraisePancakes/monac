@@ -1,21 +1,23 @@
 # BACKUS-NAUR FORM (BNF) OF THE MONAC'S PREPROCESSOR GRAMMAR
 
+# IN UNIT COMBINATION PARSERS
 <macro> ::= <definitive> | <invocative>
 <invocative> ::= <identifier> | <call-like>
 <call-like> ::= <identifier> "(" <opt-whitespace> <opt-args-list> <opt-whitespace> ")"
 <opt-args-list> ::= <args-list> | ""
-<args-list> ::= <opt-whitespace> <replacement-list> <opt-whitespace> |<opt-whitespace> <replacement-list> <opt-whitespace> "," <opt-whitespace> <params-list>
+<args-value> ::= <replacement_list> | <call-like>
+<args-list> ::= <opt-whitespace> <args-value> <opt-whitespace> |<opt-whitespace> <args-value> <opt-whitespace> "," <opt-whitespace> <args-list>
 <definitive> ::= <directive>
 <directive> ::= "@" <directive-part> <newline>
 <directive-part> ::= <define> | <undef> | <conditional-part>
 <define> ::= "define" <whitespace> <macro-definition>
 <macro-definition> ::= (<identifier> <replacement-list>) | (<function-like>  <replacement-list>)
-<function-like> ::= <identifier> "(" <opt-params-list> ")"
+<function-like> ::= <identifier> "(" <opt_white_space> <opt-params-list> <opt_white_space> ")"
 <opt-params-list> ::= <params-list> | ""
-<params-list> ::= <identifier>| <identifier> "," <params-list>
+<params-list> ::= <identifier> ("," <opt-whitespace> <identifier>)*
 <undef> ::= "undef" <whitespace> <identifier>
 
-<replacement-list> ::= <replacement-token> <replacement-list> | ""
+<replacement-list> ::= <opt_white_space> <replacement-token> <opt_white_space> <replacement-list> | ""
 
 <replacement-token> ::= <identifier> | <number> | <string-literal> | <punctuator>
 <newline> ::= "\r\n" | "\n" | "\r"
@@ -27,6 +29,8 @@
 <body-element> ::= <directive> | <conditional-part>
 <conditional-opt-else> ::= <elif> <conditional-body> <conditional-opt-else> | <else> <conditional-body> | ""
 
+
+# UNIT PARSERS
 <identifier> ::= <identifier-start> (<identifier-continue>*)
 <identifier-start> ::= <letter> | "_"
 <identifier-continue> ::= <identifier-start> | <digit>
@@ -62,11 +66,5 @@
                | "<<" | ">>"
                | "<<=" | ">>="
                | "##" | "#"
-
-
-
-
-
-
 
 

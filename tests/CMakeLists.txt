@@ -12,7 +12,6 @@ add_executable(monac_tests
 main.cpp
 unit_parsers.cpp
 directory.cpp
-prep/prep.cpp
 prep/normalizer.cpp
 cli.cpp
 )

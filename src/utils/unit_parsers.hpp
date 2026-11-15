@@ -24,10 +24,46 @@ inline auto identifier = mona::_transform([](auto tup) -> std::string {
     return ret;
 },
                                           mona::_sequence(identifier_start, mona::_many_or_none(identifier_continue)));
-inline auto string_literal = mona::_transform([](auto tup) -> std::string {
-    auto [_, s, _] = tup;
+inline auto string_character = mona::_transform([](auto c) -> std::string {
+    std::string s{""};
+    s += c;
     return s;
 },
-                                              mona::_sequence(mona::_match('\"'), mona::_symbols_ex('\"', '\\', '\n'), mona::_match('\"')));
+                                                mona::_symbol_ex('\"', '\\', '\n'));
+inline auto escape_character = mona::_any(mona::_match("n"), mona::_match("t"), mona::_match("r"), mona::_match("0"), mona::_match("\\"), mona::_match("\""), mona::_match("'"));
+inline auto escape_sequence = mona::_transform([](auto tup) -> std::string {
+    auto [f, r] = tup;
+    return f + r;
+},
+                                               mona::_sequence(mona::_match("\\"), escape_character));
+inline auto triple_unit_punctuator = mona::_any(mona::_match("..."), mona::_match("<<="), mona::_match(">>="));
+
+inline auto double_unit_punctuator = mona::_any(mona::_match("++"), mona::_match("--"), mona::_match("->"),
+                                                mona::_match("&&"), mona::_match("||"), mona::_match("=="),
+                                                mona::_match("!="), mona::_match("<="), mona::_match(">="),
+                                                mona::_match("+="), mona::_match("-="), mona::_match("*="),
+                                                mona::_match("/="), mona::_match("%="), mona::_match("&="),
+                                                mona::_match("|="), mona::_match("^="), mona::_match(">>"),
+                                                mona::_match("<<"), mona::_match("##"));
+
+inline auto single_unit_punctuator = mona::_any(mona::_match("#"), mona::_match("("), mona::_match(")"),
+                                                mona::_match("["), mona::_match("]"), mona::_match("{"),
+                                                mona::_match("}"), mona::_match("."), mona::_match(","),
+                                                mona::_match(";"), mona::_match(":"), mona::_match("?"),
+                                                mona::_match("+"), mona::_match("-"), mona::_match("*"),
+                                                mona::_match("%"), mona::_match("&"), mona::_match("|"),
+                                                mona::_match("^"), mona::_match("~"), mona::_match("!"),
+                                                mona::_match("="), mona::_match("<"), mona::_match(">"));
+
+inline auto punctuator = mona::_any(triple_unit_punctuator, double_unit_punctuator, single_unit_punctuator);
+
+inline auto string_content = mona::_many_or_none(mona::_any(string_character, escape_sequence));
+inline auto string_literal = mona::_transform([](auto tup) -> std::string {
+    std::string res{""};
+    auto [_, s, _] = tup;
+    for (const auto& str : s) res.append(str);
+    return res;
+},
+                                              mona::_sequence(mona::_match('\"'), string_content, mona::_match('\"')));
 };  // namespace utils::unit
 #endif
