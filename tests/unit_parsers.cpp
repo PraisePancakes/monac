@@ -422,7 +422,7 @@ TEST_CASE("string_content") {
         auto result = string_content(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result->size() == 11);
+        CHECK(result->size() == 12);
     }
 
     SUBCASE("Stops before closing quotation mark") {
@@ -446,7 +446,7 @@ TEST_CASE("string_literal") {
         auto result = string_literal(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result.value().empty());
+        CHECK(result.value() == "\"\"");
     }
 
     SUBCASE("Matches ordinary string") {
@@ -454,7 +454,7 @@ TEST_CASE("string_literal") {
         auto result = string_literal(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result.value() == "hello world");
+        CHECK(result.value() == "\"hello world\"");
     }
 
     SUBCASE("Matches string containing digits") {
@@ -462,7 +462,7 @@ TEST_CASE("string_literal") {
         auto result = string_literal(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result.value() == "hello123");
+        CHECK(result.value() == "\"hello123\"");
     }
 
     SUBCASE("Matches escaped newline") {
@@ -470,7 +470,7 @@ TEST_CASE("string_literal") {
         auto result = string_literal(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result.value() == "hello\\nworld");
+        CHECK(result.value() == "\"hello\\nworld\"");
     }
 
     SUBCASE("Matches multiple escape sequences") {
@@ -478,7 +478,7 @@ TEST_CASE("string_literal") {
         auto result = string_literal(ss);
 
         REQUIRE(result.has_value());
-        CHECK(result.value() == "\\n\\t\\r\\\\\\\"\\'");
+        CHECK(result.value() == "\"\\n\\t\\r\\\\\\\"\\'\"");
     }
 
     SUBCASE("Rejects unterminated string") {
@@ -499,5 +499,252 @@ TEST_CASE("string_literal") {
     SUBCASE("Does not accept raw newline") {
         std::stringstream ss{"\"hello\nworld\""};
         CHECK_FALSE(string_literal(ss).has_value());
+    }
+}
+
+TEST_CASE("Number Parser") {
+    SUBCASE("Integers") {
+        SUBCASE("Single digit") {
+            std::istringstream input{"7"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "7");
+        }
+
+        SUBCASE("Multiple digits") {
+            std::istringstream input{"42"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+        }
+
+        SUBCASE("Zero") {
+            std::istringstream input{"0"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "0");
+        }
+
+        SUBCASE("Leading zeros") {
+            std::istringstream input{"007"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "007");
+        }
+
+        SUBCASE("Large integer") {
+            std::istringstream input{"12345678901234567890"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "12345678901234567890");
+        }
+    }
+
+    SUBCASE("Floating-point numbers") {
+        SUBCASE("Single decimal digit") {
+            std::istringstream input{"4.2"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "4.2");
+        }
+
+        SUBCASE("Multiple decimal digits") {
+            std::istringstream input{"123.456"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "123.456");
+        }
+
+        SUBCASE("Zero decimal") {
+            std::istringstream input{"0.0"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "0.0");
+        }
+
+        SUBCASE("Trailing decimal point not allowed") {
+            std::istringstream input{"42."};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+        }
+
+        SUBCASE("Leading decimal point not allowed") {
+            std::istringstream input{".42"};
+            auto result = utils::unit::number(input);
+            REQUIRE(!result.has_value());
+        }
+    }
+    SUBCASE("Integral number at EOF") {
+        std::istringstream input{"5"};
+
+        auto result = utils::unit::number(input);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "5");
+    }
+    SUBCASE("Signs") {
+        SUBCASE("Negative sign") {
+            std::istringstream input{"-42"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "-42");
+        }
+
+        SUBCASE("Signed decimal") {
+            std::istringstream input{"-12.34"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "-12.34");
+        }
+    }
+
+    SUBCASE("Token boundaries") {
+        SUBCASE("Number followed by whitespace") {
+            std::istringstream input{"42 "};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+            CHECK(input.peek() == ' ');
+        }
+
+        SUBCASE("Number followed by identifier") {
+            std::istringstream input{"42abc"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+            CHECK(input.peek() == 'a');
+        }
+
+        SUBCASE("Number followed by punctuation") {
+            std::istringstream input{"42;"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+            CHECK(input.peek() == ';');
+        }
+
+        SUBCASE("Number followed by another number") {
+            std::istringstream input{"42.5"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42.5");
+        }
+    }
+
+    SUBCASE("Invalid inputs") {
+        SUBCASE("Empty input") {
+            std::istringstream input{""};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Alphabetic input") {
+            std::istringstream input{"abc"};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Only a sign") {
+            std::istringstream input{"-"};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Only a decimal point") {
+            std::istringstream input{"."};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Sign followed by decimal point") {
+            std::istringstream input{"-."};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+    }
+
+    SUBCASE("Malformed floating-point numbers") {
+        SUBCASE("Repeated decimal points") {
+            std::istringstream input{"1.2.3"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "1.2");
+            CHECK(input.peek() == '.');
+        }
+
+        SUBCASE("Repeated signs") {
+            std::istringstream input{"--42"};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Sign after digits") {
+            std::istringstream input{"42-1"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+            CHECK(input.peek() == '-');
+        }
+    }
+
+    SUBCASE("Whitespace") {
+        SUBCASE("Leading whitespace is not consumed") {
+            std::istringstream input{" 42"};
+            auto result = utils::unit::number(input);
+
+            CHECK_FALSE(result.has_value());
+        }
+
+        SUBCASE("Trailing whitespace is not consumed") {
+            std::istringstream input{"42  "};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+            CHECK(input.peek() == ' ');
+        }
+    }
+
+    SUBCASE("End-of-stream behavior") {
+        SUBCASE("Number consumes entire input") {
+            std::istringstream input{"42"};
+            auto result = utils::unit::number(input);
+
+            REQUIRE(result.has_value());
+            CHECK(result.value() == "42");
+        }
+
+        SUBCASE("Number parser can be followed by another parser") {
+            std::istringstream input{"42;"};
+            auto number = utils::unit::number(input);
+            REQUIRE(number.has_value());
+            auto semicolon = mona::_match(';')(input);
+            REQUIRE(semicolon.has_value());
+            CHECK(semicolon.value() == ';');
+        }
     }
 }

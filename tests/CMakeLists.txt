@@ -13,6 +13,7 @@ main.cpp
 unit_parsers.cpp
 directory.cpp
 prep/normalizer.cpp
+prep/parsers.cpp
 cli.cpp
 )
 

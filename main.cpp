@@ -8,8 +8,6 @@
 #include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
 #include "src/utils/directory_manager.hpp"
-#define ADD(a, b) a + b
-
 int main(int argc, char** argv) {
     if (argc < 2) {
         glob::log_info li{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No arguments passed to parse: try `monac --help` for more."};

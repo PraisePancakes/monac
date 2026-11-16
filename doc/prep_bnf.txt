@@ -6,15 +6,16 @@
 <call-like> ::= <identifier> "(" <opt-whitespace> <opt-args-list> <opt-whitespace> ")"
 <opt-args-list> ::= <args-list> | ""
 <args-value> ::= <replacement_list> | <call-like>
-<args-list> ::= <args-value> ("," <opt-whitespace> <args-value>)*
+<args-list> ::= <args-value> ("," <opt-whitespace> <args-value>)* ("," | "")
 <definitive> ::= <directive>
 <directive> ::= "@" <directive-part> <newline>
 <directive-part> ::= <define> | <undef> | <conditional-part>
 <define> ::= "define" <whitespace> <macro-definition>
-<macro-definition> ::= (<identifier> <replacement-list>) | (<function-like>  <replacement-list>)
-<function-like> ::= <identifier> "(" <opt_white_space> <opt-params-list> <opt_white_space> ")"
+<macro-definition> ::= <object-like> | <function-like>
+<object-like> ::= <identifier> <replacement_list>
+<function-like> ::= <identifier> "(" <opt_white_space> <opt-params-list> <opt_white_space> ")" <replacement-list>
 <opt-params-list> ::= <params-list> | ""
-<params-list> ::= <identifier> ("," <opt-whitespace> <identifier>)*
+<params-list> ::= <identifier> ("," <opt-whitespace> <identifier>)* ("," | "")
 <undef> ::= "undef" <whitespace> <identifier>
 
 <replacement-list> ::= <opt_white_space> <replacement-token> <opt_white_space> <replacement-list> | ""

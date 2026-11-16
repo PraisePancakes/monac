@@ -57,13 +57,32 @@ inline auto single_unit_punctuator = mona::_any(mona::_match("#"), mona::_match(
 
 inline auto punctuator = mona::_any(triple_unit_punctuator, double_unit_punctuator, single_unit_punctuator);
 
-inline auto string_content = mona::_many_or_none(mona::_any(string_character, escape_sequence));
-inline auto string_literal = mona::_transform([](auto tup) -> std::string {
+inline auto string_content = mona::_transform([](auto vec) -> std::string {
     std::string res{""};
-    auto [_, s, _] = tup;
-    for (const auto& str : s) res.append(str);
+    for (const auto& s : vec) res.append(s);
     return res;
 },
+                                              mona::_many_or_none(mona::_any(string_character, escape_sequence)));
+inline auto string_literal = mona::_transform([](auto tup) -> std::string {
+    auto [_, s, _] = tup;
+    return "\"" + s + "\"";
+},
                                               mona::_sequence(mona::_match('\"'), string_content, mona::_match('\"')));
+inline auto integral_raw = mona::_transform([](auto v) -> std::string {
+    std::string s{""};
+    for (const auto& val : v) s += (val + '0');
+    return s;
+},
+                                            mona::_many_or_one(mona::_digit()));
+inline auto signed_raw = mona::_transform([](auto pair) -> std::string {
+    return pair.first + pair.second;
+},
+                                          mona::_both(mona::_match("-"), integral_raw));
+inline auto floating_raw = mona::_transform([](auto seq) -> std::string {
+    auto [pre, dot, post] = seq;
+    return pre + dot + post;
+},
+                                            mona::_sequence(mona::_either(signed_raw, integral_raw), mona::_match("."), integral_raw));
+inline auto number = mona::_any(floating_raw, mona::_either(signed_raw, integral_raw));
 };  // namespace utils::unit
 #endif
