@@ -1,11 +1,10 @@
 import module Math;
 
 @define ADD(x, y) x + y
-@define MULT(x, y) x \
-                    * y
+@define MULT(x, y) ADD(x, y) - x * y 
 func main(x: i32, y: char**) -> i32 {
     mut x: i32 = Math.add(x, y);
-    x *= ADD(1,3);
     y = MULT(4, 3);
     return 0;
 }
+

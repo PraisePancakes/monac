@@ -13,8 +13,7 @@
 <elif-group> ::= @ elif <constant-expression> <new-line> <group>*
 <else-group> ::= @ else <new-line> <group>*
 <endif-line> ::= @ endif <new-line>
-<control-line> ::= @ include <pp-tokens> <new-line> 
-                 | @ define <identifier> <replacement-list> <new-line> 
+<control-line> ::= @ define <identifier> <replacement-list> <new-line> 
                  | @ define <identifier>( <identifier-list>* ) <replacement-list> <new-line>
                  | @ define <idenfifier>( <identifier-list>, ... ) <replacement-list> <new-line>
                  | @ undef  <identifier> <new-line>

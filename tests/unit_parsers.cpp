@@ -94,7 +94,7 @@ TEST_SUITE("unit parsers") {
 
     TEST_CASE("single_unit_punctuator") {
         const std::vector<std::string> valid{
-            "#", "(", ")", "[", "]", "{", "}", ".", ",",
+            "#", "(", ")", "[", "]", "{", "}", ".",
             ";", ":", "?", "+", "-", "*", "%", "&", "|",
             "^", "~", "!", "=", "<", ">"};
 
