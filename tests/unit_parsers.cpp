@@ -1,750 +1,383 @@
-
 #include "../src/utils/unit_parsers.hpp"
-
-#include <sstream>
-#include <string>
 
 #include "doctest.h"
 
-using namespace utils::unit;
+TEST_SUITE("unit parsers") {
+    TEST_CASE("white_space") {
+        SUBCASE("space") {
+            std::istringstream ss{" "};
+            CHECK(utils::unit::white_space(ss).value() == ' ');
+        }
 
-TEST_CASE("white_space") {
-    SUBCASE("Matches a space") {
-        std::stringstream ss{" "};
-        CHECK(white_space(ss).has_value());
-    }
+        SUBCASE("tab") {
+            std::istringstream ss{"\t"};
+            CHECK(utils::unit::white_space(ss).value() == '\t');
+        }
 
-    SUBCASE("Matches a tab") {
-        std::stringstream ss{"\t"};
-        CHECK(white_space(ss).has_value());
-    }
-
-    SUBCASE("Rejects newline") {
-        std::stringstream ss{"\n"};
-        CHECK_FALSE(white_space(ss).has_value());
-    }
-
-    SUBCASE("Rejects arbitrary characters") {
-        std::stringstream ss{"a"};
-        CHECK_FALSE(white_space(ss).has_value());
-    }
-}
-
-TEST_CASE("at_least_space") {
-    SUBCASE("Matches one space") {
-        std::stringstream ss{" "};
-        auto result = at_least_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Matches multiple spaces") {
-        std::stringstream ss{"     "};
-        auto result = at_least_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Matches tabs") {
-        std::stringstream ss{"\t\t"};
-        auto result = at_least_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Matches mixed whitespace") {
-        std::stringstream ss{" \t \t"};
-        auto result = at_least_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Rejects empty input") {
-        std::stringstream ss{""};
-        CHECK_FALSE(at_least_space(ss).has_value());
-    }
-
-    SUBCASE("Rejects non-whitespace") {
-        std::stringstream ss{"abc"};
-        CHECK_FALSE(at_least_space(ss).has_value());
-    }
-}
-
-TEST_CASE("opt_white_space") {
-    SUBCASE("Matches empty input") {
-        std::stringstream ss{""};
-        auto result = opt_white_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value().empty());
-    }
-
-    SUBCASE("Matches one space") {
-        std::stringstream ss{" "};
-        auto result = opt_white_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Matches multiple spaces") {
-        std::stringstream ss{"     "};
-        auto result = opt_white_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Matches mixed whitespace") {
-        std::stringstream ss{" \t \t"};
-        auto result = opt_white_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == " ");
-    }
-
-    SUBCASE("Does not consume non-whitespace") {
-        std::stringstream ss{"abc"};
-        auto result = opt_white_space(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value().empty());
-        CHECK(ss.peek() == 'a');
-    }
-}
-
-TEST_CASE("identifier_start") {
-    SUBCASE("Matches lowercase letters") {
-        for (char c = 'a'; c <= 'z'; ++c) {
-            std::stringstream ss{std::string(1, c)};
-            CHECK(identifier_start(ss).has_value());
+        SUBCASE("invalid whitespace") {
+            std::istringstream ss{"\n"};
+            CHECK_FALSE(utils::unit::white_space(ss));
         }
     }
 
-    SUBCASE("Matches uppercase letters") {
-        for (char c = 'A'; c <= 'Z'; ++c) {
-            std::stringstream ss{std::string(1, c)};
-            CHECK(identifier_start(ss).has_value());
+    TEST_CASE("at_least_space") {
+        SUBCASE("single space") {
+            std::istringstream ss{" "};
+            CHECK(utils::unit::at_least_space(ss).value() == " ");
+        }
+
+        SUBCASE("multiple spaces") {
+            std::istringstream ss{"   "};
+            CHECK(utils::unit::at_least_space(ss).value() == " ");
+        }
+
+        SUBCASE("tabs and spaces") {
+            std::istringstream ss{" \t \t"};
+            CHECK(utils::unit::at_least_space(ss).value() == " ");
+        }
+
+        SUBCASE("no whitespace") {
+            std::istringstream ss{"abc"};
+            CHECK_FALSE(utils::unit::at_least_space(ss));
         }
     }
 
-    SUBCASE("Matches underscore") {
-        std::stringstream ss{"_"};
-        CHECK(identifier_start(ss).has_value());
+    TEST_CASE("opt_white_space") {
+        SUBCASE("no whitespace") {
+            std::istringstream ss{"abc"};
+            CHECK(utils::unit::opt_white_space(ss).value() == "");
+        }
+
+        SUBCASE("single space") {
+            std::istringstream ss{" abc"};
+            CHECK(utils::unit::opt_white_space(ss).value() == " ");
+        }
+
+        SUBCASE("multiple spaces") {
+            std::istringstream ss{"   abc"};
+            CHECK(utils::unit::opt_white_space(ss).value() == " ");
+        }
+
+        SUBCASE("tabs") {
+            std::istringstream ss{"\t\tabc"};
+            CHECK(utils::unit::opt_white_space(ss).value() == " ");
+        }
     }
 
-    SUBCASE("Rejects digits") {
-        std::stringstream ss{"0"};
-        CHECK_FALSE(identifier_start(ss).has_value());
+    TEST_CASE("triple_unit_punctuator") {
+        const std::vector<std::string> valid{
+            "...", "<<=", ">>="};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::triple_unit_punctuator(ss).value() == token);
+        }
+
+        std::istringstream invalid{"+++"};
+        CHECK_FALSE(utils::unit::triple_unit_punctuator(invalid));
     }
 
-    SUBCASE("Rejects punctuation") {
-        std::stringstream ss{"!"};
-        CHECK_FALSE(identifier_start(ss).has_value());
+    TEST_CASE("double_unit_punctuator") {
+        const std::vector<std::string> valid{
+            "++", "--", "->", "&&", "||", "==", "!=",
+            "<=", ">=", "+=", "-=", "*=", "/=", "%=",
+            "&=", "|=", "^=", ">>", "<<", "##"};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::double_unit_punctuator(ss).value() == token);
+        }
+
+        std::istringstream invalid{"+"};
+        CHECK_FALSE(utils::unit::double_unit_punctuator(invalid));
     }
 
-    SUBCASE("Rejects whitespace") {
-        std::stringstream ss{" "};
-        CHECK_FALSE(identifier_start(ss).has_value());
-    }
-}
+    TEST_CASE("single_unit_punctuator") {
+        const std::vector<std::string> valid{
+            "#", "(", ")", "[", "]", "{", "}", ".", ",",
+            ";", ":", "?", "+", "-", "*", "%", "&", "|",
+            "^", "~", "!", "=", "<", ">"};
 
-TEST_CASE("identifier_continue") {
-    SUBCASE("Matches letters") {
-        std::stringstream ss{"a"};
-        CHECK(identifier_continue(ss).has_value());
-    }
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::single_unit_punctuator(ss).value() == token);
+        }
 
-    SUBCASE("Matches underscore") {
-        std::stringstream ss{"_"};
-        CHECK(identifier_continue(ss).has_value());
+        std::istringstream invalid{"@"};
+        CHECK_FALSE(utils::unit::single_unit_punctuator(invalid));
     }
 
-    SUBCASE("Matches digits") {
+    TEST_CASE("preprocessing_op_or_punc") {
+        const std::vector<std::string> valid{
+            "...", "<<=", ">>=", "++", "--", "->", "&&",
+            "||", "==", "!=", "<=", ">=", "+=", "-=",
+            "*=", "/=", "%=", "&=", "|=", "^=", ">>",
+            "<<", "##", "#", "(", ")", "[", "]", "{",
+            "}", ".", ",", ";", ":", "?", "+", "-", "*",
+            "%", "&", "|", "^", "~", "!", "=", "<", ">"};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::preprocessing_op_or_punc(ss).value() == token);
+        }
+
+        std::istringstream invalid{"@"};
+        CHECK_FALSE(utils::unit::preprocessing_op_or_punc(invalid));
+    }
+
+    TEST_CASE("escape_sequence") {
+        SUBCASE("backslash") {
+            std::istringstream ss{"\\\\"};
+            CHECK(utils::unit::escape_sequence(ss).value() == "\\\\");
+        }
+
+        SUBCASE("double quote") {
+            std::istringstream ss{"\\\""};
+            CHECK(utils::unit::escape_sequence(ss).value() == "\\\"");
+        }
+
+        SUBCASE("single quote") {
+            std::istringstream ss{"\\\'"};
+            CHECK(utils::unit::escape_sequence(ss).value() == "\\\'");
+        }
+
+        SUBCASE("invalid escape") {
+            std::istringstream ss{"n"};
+            CHECK_FALSE(utils::unit::escape_sequence(ss));
+        }
+    }
+
+    TEST_CASE("character") {
+        SUBCASE("ordinary character") {
+            std::istringstream ss{"a"};
+            CHECK(utils::unit::character(ss).value() == "a");
+        }
+
+        SUBCASE("digit") {
+            std::istringstream ss{"5"};
+            CHECK(utils::unit::character(ss).value() == "5");
+        }
+
+        SUBCASE("escaped backslash") {
+            std::istringstream ss{"\\\\"};
+            CHECK(utils::unit::character(ss).value() == "\\\\");
+        }
+
+        SUBCASE("escaped quote") {
+            std::istringstream ss{"\""};
+            CHECK(utils::unit::character(ss).value() == "\"");
+        }
+
+        SUBCASE("newline is character") {
+            std::istringstream ss{"\\n"};
+            CHECK(utils::unit::character(ss));
+        }
+    }
+
+    TEST_CASE("char_sequence") {
+        SUBCASE("single character") {
+            std::istringstream ss{"a"};
+            CHECK(utils::unit::char_sequence(ss).value() == "a");
+        }
+
+        SUBCASE("multiple characters") {
+            std::istringstream ss{"hello"};
+            CHECK(utils::unit::char_sequence(ss).value() == "hello");
+        }
+
+        SUBCASE("escaped characters") {
+            std::istringstream ss{"a\\\"b"};
+            CHECK(utils::unit::char_sequence(ss).value() == "a\\\"b");
+        }
+
+        SUBCASE("empty sequence") {
+            std::istringstream ss{""};
+            CHECK_FALSE(utils::unit::char_sequence(ss));
+        }
+    }
+
+    TEST_CASE("character_literal") {
+        SUBCASE("ordinary character") {
+            std::istringstream ss{"'a'"};
+            CHECK(utils::unit::character_literal(ss).value() == "'a'");
+        }
+
+        SUBCASE("escaped character") {
+            std::istringstream ss{"'\\''"};
+            CHECK(utils::unit::character_literal(ss).value() == "'\\''");
+        }
+
+        SUBCASE("multiple characters") {
+            std::istringstream ss{"'abc'"};
+            CHECK(utils::unit::character_literal(ss).value() == "'abc'");
+        }
+
+        SUBCASE("missing closing quote") {
+            std::istringstream ss{"'a"};
+            CHECK_FALSE(utils::unit::character_literal(ss));
+        }
+
+        SUBCASE("empty literal") {
+            std::istringstream ss{"''"};
+            CHECK_FALSE(utils::unit::character_literal(ss));
+        }
+    }
+
+    TEST_CASE("string_literal") {
+        SUBCASE("ordinary string") {
+            std::istringstream ss{"\"hello\""};
+            CHECK(utils::unit::string_literal(ss).value() == "\"hello\"");
+        }
+
+        SUBCASE("empty string") {
+            std::istringstream ss{"\"\""};
+            CHECK(utils::unit::string_literal(ss));
+        }
+
+        SUBCASE("escaped quote") {
+            std::istringstream ss{"\"hello \\\"world\\\"\""};
+            CHECK(utils::unit::string_literal(ss).value() == "\"hello \\\"world\\\"\"");
+        }
+
+        SUBCASE("missing closing quote") {
+            std::istringstream ss{"\"hello"};
+            CHECK_FALSE(utils::unit::string_literal(ss));
+        }
+    }
+
+    TEST_CASE("integer") {
+        SUBCASE("single digit") {
+            std::istringstream ss{"5"};
+            CHECK(utils::unit::integer(ss).value() == "5");
+        }
+
+        SUBCASE("multiple digits") {
+            std::istringstream ss{"12345"};
+            CHECK(utils::unit::integer(ss).value() == "12345");
+        }
+
+        SUBCASE("zero") {
+            std::istringstream ss{"0"};
+            CHECK(utils::unit::integer(ss).value() == "0");
+        }
+
+        SUBCASE("invalid input") {
+            std::istringstream ss{"abc"};
+            CHECK_FALSE(utils::unit::integer(ss));
+        }
+    }
+
+    TEST_CASE("negative_integer") {
+        SUBCASE("negative number") {
+            std::istringstream ss{"-123"};
+            CHECK(utils::unit::negative_integer(ss).value() == "-123");
+        }
+
+        SUBCASE("negative zero") {
+            std::istringstream ss{"-0"};
+            CHECK(utils::unit::negative_integer(ss).value() == "-0");
+        }
+
+        SUBCASE("missing digits") {
+            std::istringstream ss{"-"};
+            CHECK_FALSE(utils::unit::negative_integer(ss));
+        }
+    }
+
+    TEST_CASE("floating_point") {
+        const std::vector<std::string> valid{
+            "123.456", ".456", "123."};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::floating_point(ss).value() == token);
+        }
+
+        std::istringstream invalid{"123"};
+        CHECK_FALSE(utils::unit::floating_point(invalid));
+    }
+
+    TEST_CASE("negative_floating_point") {
+        const std::vector<std::string> valid{
+            "-123.456", "-.456", "-123."};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::negative_floating_point(ss).value() == token);
+        }
+
+        std::istringstream invalid{"-123"};
+        CHECK_FALSE(utils::unit::negative_floating_point(invalid));
+    }
+
+    TEST_CASE("digit") {
         for (char c = '0'; c <= '9'; ++c) {
-            std::stringstream ss{std::string(1, c)};
-            CHECK(identifier_continue(ss).has_value());
+            std::istringstream ss{std::string(1, c)};
+            CHECK(utils::unit::digit(ss).value() == c);
+        }
+
+        std::istringstream invalid{"a"};
+        CHECK_FALSE(utils::unit::digit(invalid));
+    }
+
+    TEST_CASE("pp_number") {
+        const std::vector<std::string> valid{
+            "123", "-123", "123.456", ".456", "123.",
+            "-123.456", "-.456", "-123."};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::pp_number(ss).value() == token);
+        }
+
+        std::istringstream invalid{"abc"};
+        CHECK_FALSE(utils::unit::pp_number(invalid));
+    }
+
+    TEST_CASE("identifier_nondigit") {
+        SUBCASE("letter") {
+            std::istringstream ss{"a"};
+            CHECK(utils::unit::identifier_nondigit(ss).value() == 'a');
+        }
+
+        SUBCASE("underscore") {
+            std::istringstream ss{"_"};
+            CHECK(utils::unit::identifier_nondigit(ss).value() == '_');
+        }
+
+        SUBCASE("digit rejected") {
+            std::istringstream ss{"5"};
+            CHECK_FALSE(utils::unit::identifier_nondigit(ss));
         }
     }
 
-    SUBCASE("Rejects punctuation") {
-        std::stringstream ss{"!"};
-        CHECK_FALSE(identifier_continue(ss).has_value());
-    }
-
-    SUBCASE("Rejects whitespace") {
-        std::stringstream ss{" "};
-        CHECK_FALSE(identifier_continue(ss).has_value());
-    }
-}
-
-TEST_CASE("identifier") {
-    SUBCASE("Matches a single lowercase letter") {
-        std::stringstream ss{"a"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "a");
-    }
-
-    SUBCASE("Matches a single uppercase letter") {
-        std::stringstream ss{"A"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "A");
-    }
-
-    SUBCASE("Matches underscore") {
-        std::stringstream ss{"_"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "_");
-    }
-
-    SUBCASE("Matches an identifier containing digits") {
-        std::stringstream ss{"variable123"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "variable123");
-    }
-
-    SUBCASE("Matches an identifier beginning with underscore") {
-        std::stringstream ss{"_variable"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "_variable");
-    }
-
-    SUBCASE("Matches consecutive underscores") {
-        std::stringstream ss{"__MY_VARIABLE__"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "__MY_VARIABLE__");
-    }
-
-    SUBCASE("Does not consume trailing punctuation") {
-        std::stringstream ss{"variable!"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "variable");
-        CHECK(ss.peek() == '!');
-    }
-
-    SUBCASE("Rejects identifiers beginning with digits") {
-        std::stringstream ss{"123abc"};
-        CHECK_FALSE(identifier(ss).has_value());
-    }
-
-    SUBCASE("Rejects empty input") {
-        std::stringstream ss{""};
-        CHECK_FALSE(identifier(ss).has_value());
-    }
-
-    SUBCASE("Stops at whitespace") {
-        std::stringstream ss{"hello world"};
-        auto result = identifier(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "hello");
-        CHECK(ss.peek() == ' ');
-    }
-}
-
-TEST_CASE("string_character") {
-    SUBCASE("Matches ordinary characters") {
-        std::stringstream ss{"a"};
-        CHECK(string_character(ss).has_value());
-    }
-
-    SUBCASE("Matches digits") {
-        std::stringstream ss{"5"};
-        CHECK(string_character(ss).has_value());
-    }
-
-    SUBCASE("Matches spaces") {
-        std::stringstream ss{" "};
-        CHECK(string_character(ss).has_value());
-    }
-
-    SUBCASE("Rejects double quotes") {
-        std::stringstream ss{"\""};
-        CHECK_FALSE(string_character(ss).has_value());
-    }
-
-    SUBCASE("Rejects backslashes") {
-        std::stringstream ss{"\\"};
-        CHECK_FALSE(string_character(ss).has_value());
-    }
-
-    SUBCASE("Rejects newlines") {
-        std::stringstream ss{"\n"};
-        CHECK_FALSE(string_character(ss).has_value());
-    }
-}
-
-TEST_CASE("escape_character") {
-    SUBCASE("Accepts supported escape characters") {
-        for (const std::string& c : {"n", "t", "r", "0", "\\", "\"", "'"}) {
-            std::stringstream ss{c};
-            CHECK(escape_character(ss).has_value());
-        }
-    }
-
-    SUBCASE("Rejects unsupported escape characters") {
-        for (const std::string& c : {"a", "b", "x", "1", " "}) {
-            std::stringstream ss{c};
-            CHECK_FALSE(escape_character(ss).has_value());
-        }
-    }
-}
-
-TEST_CASE("escape_sequence") {
-    SUBCASE("Matches newline escape") {
-        std::stringstream ss{"\\n"};
-        auto result = escape_sequence(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\\n");
-    }
-
-    SUBCASE("Matches tab escape") {
-        std::stringstream ss{"\\t"};
-        auto result = escape_sequence(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\\t");
-    }
-
-    SUBCASE("Matches null escape") {
-        std::stringstream ss{"\\0"};
-        auto result = escape_sequence(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\\0");
-    }
-
-    SUBCASE("Matches escaped backslash") {
-        std::stringstream ss{"\\\\"};
-        auto result = escape_sequence(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\\\\");
-    }
-
-    SUBCASE("Matches escaped quotation mark") {
-        std::stringstream ss{"\\\""};
-        auto result = escape_sequence(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\\\"");
-    }
-
-    SUBCASE("Rejects unsupported escapes") {
-        std::stringstream ss{"\\x"};
-        CHECK_FALSE(escape_sequence(ss).has_value());
-    }
-
-    SUBCASE("Rejects missing escape character") {
-        std::stringstream ss{"\\"};
-        CHECK_FALSE(escape_sequence(ss).has_value());
-    }
-}
-
-TEST_CASE("punctuator") {
-    const std::vector<std::string> valid_punctuators{
-        "(", ")", "[", "]", "{", "}",
-        ".", "...", ",", ";", ":", "?",
-        "+", "-", "*", "%", "&", "|",
-        "^", "~", "!", "=", "<", ">",
-        "++", "--", "->", "&&", "||",
-        "==", "!=", "<=", ">=",
-        "+=", "-=", "*=", "/=", "%=",
-        "&=", "|=", "^=", ">>", "<<",
-        "<<=", ">>=", "##", "#"};
-
-    SUBCASE("Recognizes all defined punctuators") {
-        for (const auto& p : valid_punctuators) {
-            std::stringstream ss{p};
-            auto result = punctuator(ss);
-
-            INFO("Testing punctuator: " << p);
-            REQUIRE(result.has_value());
-        }
-    }
-
-    SUBCASE("Rejects invalid punctuators") {
-        for (const std::string& p : {"@", "$", "\\", "`"}) {
-            std::stringstream ss{p};
-
-            INFO("Testing invalid punctuator: " << p);
-            CHECK_FALSE(punctuator(ss).has_value());
-        }
-    }
-}
-
-TEST_CASE("string_content") {
-    SUBCASE("Matches ordinary string content") {
-        std::stringstream ss{"hello"};
-        auto result = string_content(ss);
-
-        REQUIRE(result.has_value());
-        REQUIRE(result->size() == 5);
-    }
-
-    SUBCASE("Matches empty content") {
-        std::stringstream ss{""};
-        auto result = string_content(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result->empty());
-    }
-
-    SUBCASE("Matches content containing spaces") {
-        std::stringstream ss{"hello world"};
-        auto result = string_content(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result->size() == 11);
-    }
-
-    SUBCASE("Matches escaped characters") {
-        std::stringstream ss{"hello\\nworld"};
-        auto result = string_content(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result->size() == 12);
-    }
-
-    SUBCASE("Stops before closing quotation mark") {
-        std::stringstream ss{"hello\""};
-        auto result = string_content(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result->size() == 5);
-        CHECK(ss.peek() == '"');
-    }
-
-    SUBCASE("Rejects no input only if the parser requires content") {
-        std::stringstream ss{""};
-        CHECK(string_content(ss).has_value());
-    }
-}
-
-TEST_CASE("string_literal") {
-    SUBCASE("Matches empty string") {
-        std::stringstream ss{"\"\""};
-        auto result = string_literal(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\"\"");
-    }
-
-    SUBCASE("Matches ordinary string") {
-        std::stringstream ss{"\"hello world\""};
-        auto result = string_literal(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\"hello world\"");
-    }
-
-    SUBCASE("Matches string containing digits") {
-        std::stringstream ss{"\"hello123\""};
-        auto result = string_literal(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\"hello123\"");
-    }
-
-    SUBCASE("Matches escaped newline") {
-        std::stringstream ss{"\"hello\\nworld\""};
-        auto result = string_literal(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\"hello\\nworld\"");
-    }
-
-    SUBCASE("Matches multiple escape sequences") {
-        std::stringstream ss{"\"\\n\\t\\r\\\\\\\"\\'\""};
-        auto result = string_literal(ss);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "\"\\n\\t\\r\\\\\\\"\\'\"");
-    }
-
-    SUBCASE("Rejects unterminated string") {
-        std::stringstream ss{"\"hello"};
-        CHECK_FALSE(string_literal(ss).has_value());
-    }
-
-    SUBCASE("Rejects invalid escape sequence") {
-        std::stringstream ss{"\"hello\\x\""};
-        CHECK_FALSE(string_literal(ss).has_value());
-    }
-
-    SUBCASE("Rejects missing opening quotation mark") {
-        std::stringstream ss{"hello\""};
-        CHECK_FALSE(string_literal(ss).has_value());
-    }
-
-    SUBCASE("Does not accept raw newline") {
-        std::stringstream ss{"\"hello\nworld\""};
-        CHECK_FALSE(string_literal(ss).has_value());
-    }
-}
-
-TEST_CASE("Number Parser") {
-    SUBCASE("Integers") {
-        SUBCASE("Single digit") {
-            std::istringstream input{"7"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "7");
+    TEST_CASE("identifier") {
+        const std::vector<std::string> valid{
+            "hello", "_hello", "hello123", "_123",
+            "Hello_World", "a1b2c3", "_"};
+
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::identifier(ss).value() == token);
         }
 
-        SUBCASE("Multiple digits") {
-            std::istringstream input{"42"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-        }
-
-        SUBCASE("Zero") {
-            std::istringstream input{"0"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "0");
-        }
-
-        SUBCASE("Leading zeros") {
-            std::istringstream input{"007"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "007");
-        }
-
-        SUBCASE("Large integer") {
-            std::istringstream input{"12345678901234567890"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "12345678901234567890");
-        }
+        std::istringstream invalid{"123hello"};
+        CHECK_FALSE(utils::unit::identifier(invalid));
     }
 
-    SUBCASE("Floating-point numbers") {
-        SUBCASE("Single decimal digit") {
-            std::istringstream input{"4.2"};
-            auto result = utils::unit::number(input);
+    TEST_CASE("preprocessing_token") {
+        const std::vector<std::string> valid{
+            "identifier", "_identifier123",
+            "123", "123.456", "-123",
+            "'a'", "\"hello\"",
+            "...", "##", "++", "+", "("};
 
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "4.2");
+        for (const auto& token : valid) {
+            std::istringstream ss{token};
+            CHECK(utils::unit::preprocessing_token(ss).value() == token);
         }
 
-        SUBCASE("Multiple decimal digits") {
-            std::istringstream input{"123.456"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "123.456");
-        }
-
-        SUBCASE("Zero decimal") {
-            std::istringstream input{"0.0"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "0.0");
-        }
-
-        SUBCASE("Trailing decimal point not allowed") {
-            std::istringstream input{"42."};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-        }
-
-        SUBCASE("Leading decimal point not allowed") {
-            std::istringstream input{".42"};
-            auto result = utils::unit::number(input);
-            REQUIRE(!result.has_value());
-        }
-    }
-    SUBCASE("Integral number at EOF") {
-        std::istringstream input{"5"};
-
-        auto result = utils::unit::number(input);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "5");
-    }
-    SUBCASE("Signs") {
-        SUBCASE("Negative sign") {
-            std::istringstream input{"-42"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "-42");
-        }
-
-        SUBCASE("Signed decimal") {
-            std::istringstream input{"-12.34"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "-12.34");
-        }
-    }
-
-    SUBCASE("Token boundaries") {
-        SUBCASE("Number followed by whitespace") {
-            std::istringstream input{"42 "};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-            CHECK(input.peek() == ' ');
-        }
-
-        SUBCASE("Number followed by identifier") {
-            std::istringstream input{"42abc"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-            CHECK(input.peek() == 'a');
-        }
-
-        SUBCASE("Number followed by punctuation") {
-            std::istringstream input{"42;"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-            CHECK(input.peek() == ';');
-        }
-
-        SUBCASE("Number followed by another number") {
-            std::istringstream input{"42.5"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42.5");
-        }
-    }
-
-    SUBCASE("Invalid inputs") {
-        SUBCASE("Empty input") {
-            std::istringstream input{""};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Alphabetic input") {
-            std::istringstream input{"abc"};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Only a sign") {
-            std::istringstream input{"-"};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Only a decimal point") {
-            std::istringstream input{"."};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Sign followed by decimal point") {
-            std::istringstream input{"-."};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-    }
-
-    SUBCASE("Malformed floating-point numbers") {
-        SUBCASE("Repeated decimal points") {
-            std::istringstream input{"1.2.3"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "1.2");
-            CHECK(input.peek() == '.');
-        }
-
-        SUBCASE("Repeated signs") {
-            std::istringstream input{"--42"};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Sign after digits") {
-            std::istringstream input{"42-1"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-            CHECK(input.peek() == '-');
-        }
-    }
-
-    SUBCASE("Whitespace") {
-        SUBCASE("Leading whitespace is not consumed") {
-            std::istringstream input{" 42"};
-            auto result = utils::unit::number(input);
-
-            CHECK_FALSE(result.has_value());
-        }
-
-        SUBCASE("Trailing whitespace is not consumed") {
-            std::istringstream input{"42  "};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-            CHECK(input.peek() == ' ');
-        }
-    }
-
-    SUBCASE("End-of-stream behavior") {
-        SUBCASE("Number consumes entire input") {
-            std::istringstream input{"42"};
-            auto result = utils::unit::number(input);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == "42");
-        }
-
-        SUBCASE("Number parser can be followed by another parser") {
-            std::istringstream input{"42;"};
-            auto number = utils::unit::number(input);
-            REQUIRE(number.has_value());
-            auto semicolon = mona::_match(';')(input);
-            REQUIRE(semicolon.has_value());
-            CHECK(semicolon.value() == ';');
-        }
+        std::istringstream invalid{"@"};
+        CHECK_FALSE(utils::unit::preprocessing_token(invalid));
     }
 }

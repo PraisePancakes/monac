@@ -10,10 +10,10 @@ FetchContent_MakeAvailable(doctest)
 
 add_executable(monac_tests
 main.cpp
-unit_parsers.cpp
 directory.cpp
 prep/normalizer.cpp
-prep/parsers.cpp
+unit_parsers.cpp
+prep/prep_parsers.cpp
 cli.cpp
 )
 

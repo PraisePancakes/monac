@@ -1,71 +1,90 @@
 # BACKUS-NAUR FORM (BNF) OF THE MONAC'S PREPROCESSOR GRAMMAR
 
 # IN UNIT COMBINATION PARSERS
-<macro> ::= <definitive> | <invocative>
-<invocative> ::= <identifier> | <call-like>
-<call-like> ::= <identifier> "(" <opt-whitespace> <opt-args-list> <opt-whitespace> ")"
-<opt-args-list> ::= <args-list> | ""
-<args-value> ::= <replacement_list> | <call-like>
-<args-list> ::= <args-value> ("," <opt-whitespace> <args-value>)* ("," | "")
-<definitive> ::= <directive>
-<directive> ::= "@" <directive-part> <newline>
-<directive-part> ::= <define> | <undef> | <conditional-part>
-<define> ::= "define" <whitespace> <macro-definition>
-<macro-definition> ::= <object-like> | <function-like>
-<object-like> ::= <identifier> <replacement_list>
-<function-like> ::= <identifier> "(" <opt_white_space> <opt-params-list> <opt_white_space> ")" <replacement-list>
-<opt-params-list> ::= <params-list> | ""
-<params-list> ::= <identifier> ("," <opt-whitespace> <identifier>)* ("," | "")
-<undef> ::= "undef" <whitespace> <identifier>
+<group> ::= <group-part> | <group> <group-part>
+<group-part> ::= <if-section> | <control-line> | <text-line> | @ <non-directive>
+<if-section> ::= <if-group> <elif-groups>* <else-group>* <endif-line>
 
-<replacement-list> ::= <opt_white_space> <replacement-token> <opt_white_space> <replacement-list> | ""
+<if-group> ::= @ if <constant-expression> <new-line> <group>* 
+             | @ ifdef <identifier> <new-line> <group>* 
+             | @ ifndef <identifier> <new-line> <group>*
 
-<replacement-token> ::= <identifier> | <number> | <string-literal> | <punctuator>
-<newline> ::= "\r\n" | "\n" | "\r"
-<whitespace> ::= " " <whitespace> | "\t" <whitespace> | " "
-<opt-whitespace> ::= <whitespace> | ""
-<conditional-open> ::= <if> | <ifndef> | <ifdef>
-<conditional-part> ::= <conditional-open> <conditional-body> <conditional-opt-else> <endif>
-<conditional-body> ::= <body-element> <conditional-body> | ""
-<body-element> ::= <directive> | <conditional-part>
-<conditional-opt-else> ::= <elif> <conditional-body> <conditional-opt-else> | <else> <conditional-body> | ""
+<elif-groups> ::= <elif-group> | <elif-groups> <elif-group>
+<elif-group> ::= @ elif <constant-expression> <new-line> <group>*
+<else-group> ::= @ else <new-line> <group>*
+<endif-line> ::= @ endif <new-line>
+<control-line> ::= @ include <pp-tokens> <new-line> 
+                 | @ define <identifier> <replacement-list> <new-line> 
+                 | @ define <identifier>( <identifier-list>* ) <replacement-list> <new-line>
+                 | @ define <idenfifier>( <identifier-list>, ... ) <replacement-list> <new-line>
+                 | @ undef  <identifier> <new-line>
+                 | @ <new-line>
+<text-line> ::= <pp-tokens>* <new-line>
+<identifier-list> ::= <identifier> | (<identifier-list> , <identifier>)
+<replacement-list> ::= <pp-tokens>*
+<pp-tokens> ::= <preprocessing-token> | (<pp-tokens> <preprocessing-token>)
 
 
 # UNIT PARSERS
-<identifier> ::= <identifier-start> (<identifier-continue>*)
-<identifier-start> ::= <letter> | "_"
-<identifier-continue> ::= <identifier-start> | <digit>
-<letter> ::= "a" | "b" | ... | "z"
-           | "A" | "B" | ... | "Z"
-<number> ::= <integer> | <floating-point>
+<preprocessing-token> ::= <identifier> | <pp-number> | <character-literal> |  <string-literal> | <preprocessing-op-or-punc>
+<identifier> ::= (<identifier-nondigit> | (<identifier> <identifier-nondigit>) | <identifier> <digit>)+
+<identifier-nondigit> ::= [a-zA-Z] | _
+<digit> ::= [0-9]
+<pp-number> ::= <integer> | <floating-point> | <negative-integer> | <negative-floating-point>
+<negative-floating-point> ::= -<floating-point>
+<floating-point> ::= <integer>.<integer> | .<integer> | <integer>. 
+<negative-integer> ::= -<integer>
 <integer> ::= <digit>+
-<floating-point> ::= <digit>+ "." <digit>+ | "." <digit>+ | <digit>+ "." 
-<digit> ::= "0" | "1" | "2" | "3" | "4"
-          | "5" | "6" | "7" | "8" | "9"
-<string-literal> ::= "\"" <string-content> "\""
+<string-literal> ::= " <char-sequence>* "
+<character-literal> ::= '<char-sequence>'
+<char-sequence> ::= <character> | (<char-sequence> <character>)
+<character> ::= [^'\\\r\n] | <escape-sequence>
+<escape-sequence> ::= \' | \" | \\ | \n | \t | \r
 
-<string-content> ::= <string-character> <string-content>
-                   | <escape-sequence> <string-content>
-                   | ""
-
-<string-character> ::= any character except "\"", "\\", or "\\n"
-<escape-sequence> ::= "\\" <escape-character>
-<escape-character> ::= "n" | "t" | "r" | "0" | "\\" | "\"" | "'"
-<punctuator> ::= "(" | ")" | "[" | "]" | "{" | "}"
-               | "." | "..." | "," | ";"
-               | ":" | "?" 
-               | "+" | "-" | "*" | "/" | "%"
-               | "&" | "|" | "^" | "~" | "!"
-               | "=" | "<" | ">"
-               | "++" | "--"
-               | "->"
-               | "&&" | "||"
-               | "==" | "!="
-               | "<=" | ">="
-               | "+=" | "-=" | "*=" | "/=" | "%="
-               | "&=" | "|=" | "^="
-               | "<<" | ">>"
-               | "<<=" | ">>="
-               | "##" | "#"
+<preprocessing-op-or-punc> ::= { 
+                              | } 
+                              | [ 
+                              | ] 
+                              | # 
+                              | ## 
+                              | ( 
+                              | ) 
+                              | ; 
+                              | : 
+                              | ... 
+                              | ? 
+                              | . 
+                              | + 
+                              | * 
+                              | / 
+                              | ^ 
+                              | & 
+                              | | 
+                              | ~ 
+                              | ! 
+                              | = 
+                              | < 
+                              | > 
+                              | += 
+                              | -= 
+                              | *= 
+                              | /= 
+                              | %= 
+                              | ^= 
+                              | &= 
+                              | |=
+                              | << 
+                              | >>
+                              | <<= 
+                              | >>= 
+                              | ==
+                              | !=
+                              | <=
+                              | >=
+                              | &&
+                              | ||
+                              | ++
+                              | --
+                              | ,   	
 
 
