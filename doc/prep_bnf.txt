@@ -20,14 +20,14 @@
                  | @ undef  <identifier> <new-line>
                  | @ <new-line>
 <text-line> ::= <pp-tokens>* <new-line>
-<identifier-list> ::= <identifier> | (<identifier-list> , <identifier>)
+<identifier-list> ::= <identifier> | EBNF_GROUP(<identifier-list> , <identifier>)
 <replacement-list> ::= <pp-tokens>*
-<pp-tokens> ::= <preprocessing-token> | (<pp-tokens> <preprocessing-token>)
+<pp-tokens> ::= <preprocessing-token> | <pp-tokens> <preprocessing-token>
 
 
 # UNIT PARSERS
 <preprocessing-token> ::= <identifier> | <pp-number> | <character-literal> |  <string-literal> | <preprocessing-op-or-punc>
-<identifier> ::= (<identifier-nondigit> | (<identifier> <identifier-nondigit>) | <identifier> <digit>)+
+<identifier> ::= EBNF_GROUP(<identifier-nondigit> | EBNF_GROUP(<identifier> <identifier-nondigit>) | <identifier> <digit>)+
 <identifier-nondigit> ::= [a-zA-Z] | _
 <digit> ::= [0-9]
 <pp-number> ::= <integer> | <floating-point> | <negative-integer> | <negative-floating-point>
@@ -37,7 +37,7 @@
 <integer> ::= <digit>+
 <string-literal> ::= " <char-sequence>* "
 <character-literal> ::= '<char-sequence>'
-<char-sequence> ::= <character> | (<char-sequence> <character>)
+<char-sequence> ::= <character> | EBNF_GROUP(<char-sequence> <character>)
 <character> ::= [^'\\\r\n] | <escape-sequence>
 <escape-sequence> ::= \' | \" | \\ | \n | \t | \r
 

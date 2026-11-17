@@ -26,5 +26,6 @@ inline auto replacement_list = mona::_transform([](const auto vec) -> std::vecto
     return ret;
 },
                                                 mona::_many_or_none(mona::_sequence(utils::unit::preprocessing_token, utils::unit::opt_white_space)));
+inline auto text_line = mona::_transform();
 };  // namespace monac::prep::parsers
 #endif
