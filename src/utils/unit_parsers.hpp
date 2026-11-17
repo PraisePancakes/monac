@@ -11,6 +11,7 @@ inline auto opt_white_space = mona::_transform([](auto v) -> std::string {
     return " ";
 },
                                                mona::_many_or_none(white_space));
+inline auto new_line = mona::_any(mona::_match("\r\n"), mona::_match("\n"), mona::_match("\r"));
 
 inline auto triple_unit_punctuator = mona::_any(mona::_match("..."), mona::_match("<<="), mona::_match(">>="));
 
