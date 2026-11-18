@@ -1,10 +1,94 @@
 import module Math;
 
+// Object-like macros
+@define VERSION 1
+@define MAX_SIZE 1024
+@define DEFAULT_VALUE 42
+@define ENABLE_FEATURE 1
+
+// Basic function-like macros
 @define ADD(x, y) x + y
-@define MULT(x, y) ADD(x, y) - x * y 
+@define SUB(x, y) x - y
+@define MUL(x, y) x * y
+@define DIV(x, y) x / y
+
+// Nested macro expansion
+@define DOUBLE(x) ADD(x, x)
+@define SQUARE(x) MUL(x, x)
+@define CUBE(x) MUL(SQUARE(x), x)
+
+// Repeated parameters
+@define MULTIPLY_ADD(x, y) ADD(MUL(x, y), x)
+@define COMPLEX(x, y, z) ADD(MUL(x, y), MUL(y, z))
+
+// Macros expanding into other macros
+@define INCREMENT(x) ADD(x, 1)
+@define DECREMENT(x) SUB(x, 1)
+@define NEXT_VALUE(x) INCREMENT(INCREMENT(x))
+
+// Nested invocations with multiple arguments
+@define CALCULATE(x, y) ADD(MUL(x, y), SUB(x, y))
+@define COMPLICATED(x, y) CALCULATE(ADD(x, y), MUL(x, y))
+
+// Parenthesized arguments
+@define IDENTITY(x) x
+@define GROUP(x) (x)
+@define NEGATE(x) (0 - x)
+
+// Whitespace-sensitive cases
+@define SPACED_ADD(x, y) x    +    y
+@define TIGHT_ADD(x,y) x+y
+
+// Macro composition
+@define AREA(width, height) MUL(width, height)
+@define PERIMETER(width, height) MUL(2, ADD(width, height))
+@define RECTANGLE(width, height) ADD(AREA(width, height), PERIMETER(width, height))
+
 func main(x: i32, y: char**) -> i32 {
-    mut x: i32 = Math.add(x, y);
-    y = MULT(4, 3);
+    mut a: i32 = VERSION;
+    mut b: i32 = MAX_SIZE;
+    mut c: i32 = DEFAULT_VALUE;
+
+    // Basic expansion
+    a = ADD(4, 3);
+    b = SUB(10, 2);
+    c = MUL(5, 6);
+
+    // Repeated parameter expansion
+    a = DOUBLE(5);
+    b = SQUARE(4);
+    c = CUBE(3);
+
+    // Nested expansion
+    a = MULTIPLY_ADD(4, 3);
+    b = COMPLEX(2, 3, 4);
+    c = CALCULATE(5, 2);
+
+    // Recursive expansion
+    a = INCREMENT(10);
+    b = DECREMENT(10);
+    c = NEXT_VALUE(5);
+
+    // Nested function-like invocations
+    a = COMPLICATED(2, 3);
+    b = ADD(IDENTITY(4), IDENTITY(5));
+
+    // Parenthesized arguments
+    a = GROUP(ADD(2, 3));
+    b = NEGATE(ADD(4, 5));
+
+    // Whitespace preservation
+    a = SPACED_ADD(1, 2);
+    b = TIGHT_ADD(3, 4);
+
+    // Multiple macros in one expression
+    c = ADD(MUL(2, 3), SUB(10, 4));
+
+    // Macros in function arguments
+    Math.add(ADD(1, 2), MUL(3, 4));
+
+    // Object-like and function-like macros together
+    a = ADD(VERSION, DEFAULT_VALUE);
+
     return 0;
 }
-

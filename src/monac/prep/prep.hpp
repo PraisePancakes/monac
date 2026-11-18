@@ -21,7 +21,6 @@ class preprocessor {
         std::string expanded;
     } _m_info;
     std::unordered_map<std::string, parsers::macro_node_t> m_symbol_table;
-
     void _visit_control(parsers::macro_node_t macro) {
         std::visit(utils::overload{
                        [this](const parsers::variable var) {
@@ -40,33 +39,53 @@ class preprocessor {
     // @define ADD(a, b) a + b
     // @define FUNC(a, b) b + a
     // FUNC(  1  , ADD(2, 3)); -> 2 + 3 + 1
+    std::vector<std::string> _parse_arguments(std::istream& is) {
+        if (!mona::_match('(')(is)) throw std::runtime_error("missing opening paren '(' on macro invocation");
+        std::vector<std::string> arguments;
+        std::string current;
+        unsigned int depth = 0;
+        while (!mona::_eof()(is)) {
+            if (auto lp = mona::_match('(')(is)) {
+                ++depth;
+                current += lp.value();
+            } else if (auto rp = mona::_match(')')(is)) {
+                if (depth == 0) {
+                    if (!current.empty()) arguments.push_back(current);
+                    return arguments;
+                }
+                --depth;
+                current += rp.value();
+            } else if (depth == 0 && mona::_match(',')(is)) {
+                arguments.push_back(current);
+                current.clear();
+            } else {
+                current += is.get();
+            }
+        }
+        return arguments;
+    }
+
     void _expand_ident(const std::string& id, std::istream& is) {
         if (!_known_symbol(id)) return;
         std::visit(utils::overload{
                        [this, &is](const parsers::function func) {
+                           // parse -> replace -> expand
                            std::unordered_map<unsigned int, std::string> args_map;
-                           unsigned int arg_pos{0};
-                           mona::_match('(')(is);
                            utils::unit::opt_white_space(is);
-                           while (!mona::_match(')')(is)) {
-                               utils::unit::opt_white_space(is);
-                               auto token = utils::unit::argument_token(is);
-                               utils::unit::opt_white_space(is);
-                               if (token) {
-                                   args_map[arg_pos++] = token.value();
-                                   if (_known_symbol(token.value())) _expand_ident(token.value(), is);
-                               }
-                               mona::_match(',')(is);
-                           }
+                           std::vector<std::string> args = _parse_arguments(is);
+                           for (auto i{0uz}; i < args.size(); i++) args_map[i] = args[i];
+
+                           std::stringstream new_stream;
                            for (auto i{0uz}; i < func.replacement_list.size(); i++) {
                                std::string r = func.replacement_list[i];
                                if (func.parameters_map.contains(r)) {
-                                   _m_info.expanded.append(args_map.at(func.parameters_map.at(r)));
-                               } else /*eventually needs to be else if known symbol, expand token*/
-                                   _m_info.expanded.append(r);
+                                   new_stream << args_map.at(func.parameters_map.at(r));
+                               } else
+                                   new_stream << r;
                                if (i < func.replacement_list.size() - 1)
-                                   _m_info.expanded.append(" ");
+                                   new_stream << ' ';
                            };
+                           process(new_stream);
                        },
                        [this, &is](const parsers::variable var) {
                            for (const auto replacement : var.replacement_list) {
@@ -90,8 +109,7 @@ class preprocessor {
     preprocessor& operator=(const preprocessor&) = delete;
     ~preprocessor() = default;
 
-    prep_info process() {
-        std::stringstream stream{m_normalized};
+    prep_info process(std::istream& stream) {
         while (!mona::_eof()(stream)) {
             auto control = parsers::control_line(stream);
             if (control) {
@@ -107,9 +125,12 @@ class preprocessor {
             } else
                 _m_info.expanded += stream.get();
         };
-        // don't worry about import/exports. This class will only handle macro replacements (for now) and eventually expansions.
-
         return _m_info;
+    };
+
+    prep_info process() {
+        std::stringstream stream{m_normalized};
+        return process(stream);
     };
 };
 };  // namespace monac::prep

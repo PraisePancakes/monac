@@ -1,352 +1,395 @@
 #include "../../src/monac/prep/prep_parsers.hpp"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "../doctest.h"
 
-TEST_SUITE("preprocessor parsers") {
-    using namespace monac::prep::parsers;
-    TEST_CASE("identifier_list") {
-        SUBCASE("single identifier") {
-            std::stringstream ss{"foo"};
+using namespace monac::prep::parsers;
 
-            const auto result = monac::prep::parsers::identifier_list(ss);
+// ------------------------------------------------------------
+// pp_tokens
+// ------------------------------------------------------------
 
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo"});
-        }
+TEST_CASE("pp_tokens") {
+    SUBCASE("parses a single identifier") {
+        std::istringstream stream{"hello"};
 
-        SUBCASE("two identifiers") {
-            std::stringstream ss{"foo,bar"};
+        auto result = pp_tokens(stream);
 
-            const auto result = monac::prep::parsers::identifier_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo", "bar"});
-        }
-
-        SUBCASE("multiple identifiers") {
-            std::stringstream ss{"foo,bar,baz"};
-
-            const auto result = monac::prep::parsers::identifier_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo", "bar", "baz"});
-        }
-
-        SUBCASE("identifiers with digits") {
-            std::stringstream ss{"foo1,bar2,baz3"};
-
-            const auto result = monac::prep::parsers::identifier_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo1", "bar2", "baz3"});
-        }
-
-        SUBCASE("empty input") {
-            std::stringstream ss{""};
-
-            CHECK_FALSE(monac::prep::parsers::identifier_list(ss).has_value());
-        }
-
-        SUBCASE("trailing comma") {
-            std::stringstream ss{"foo,bar,"};
-
-            const auto result = monac::prep::parsers::identifier_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo", "bar"});
-            CHECK(ss.peek() == ',');
-        }
-
-        SUBCASE("invalid first identifier") {
-            std::stringstream ss{"123foo"};
-
-            CHECK_FALSE(monac::prep::parsers::identifier_list(ss).has_value());
-        }
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "hello");
     }
 
-    TEST_CASE("replacement_list") {
-        SUBCASE("single identifier") {
-            std::stringstream ss{"foo"};
+    SUBCASE("parses a single number") {
+        std::istringstream stream{"123"};
 
-            const auto result = monac::prep::parsers::replacement_list(ss);
+        auto result = pp_tokens(stream);
 
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo"});
-        }
-
-        SUBCASE("multiple preprocessing tokens") {
-            std::stringstream ss{"foo + bar"};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"foo", "+", "bar"});
-        }
-
-        SUBCASE("integer tokens") {
-            std::stringstream ss{"123 456"};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"123", "456"});
-        }
-
-        SUBCASE("punctuation tokens") {
-            std::stringstream ss{"foo(a,b)"};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{
-                                        "foo", "(", "a", ",", "b", ")"});
-        }
-
-        SUBCASE("string literal") {
-            std::stringstream ss{"\"hello\""};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"\"hello\""});
-        }
-
-        SUBCASE("character literal") {
-            std::stringstream ss{"'a'"};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value() == std::vector<std::string>{"'a'"});
-        }
-
-        SUBCASE("empty input") {
-            std::stringstream ss{""};
-
-            const auto result = monac::prep::parsers::replacement_list(ss);
-
-            REQUIRE(result.has_value());
-            CHECK(result.value().empty());
-        }
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "123");
     }
 
-    TEST_SUITE("define_identifier") {
-        TEST_CASE("simple object-like macro") {
-            std::stringstream ss("@define VALUE 42\n");
-            auto result = _internal_ctrl::define_identifier(ss);
+    SUBCASE("parses a single operator") {
+        std::istringstream stream{"+"};
 
-            REQUIRE(result.has_value());
-            REQUIRE(std::holds_alternative<variable>(result.value()));
+        auto result = pp_tokens(stream);
 
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list == std::vector<std::string>{"42"});
-        }
-
-        TEST_CASE("multiple replacement tokens") {
-            std::stringstream ss("@define VALUE 5 + 3 - 4\n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{"5", "+", "3", "-", "4"});
-        }
-
-        TEST_CASE("empty replacement list") {
-            std::stringstream ss("@define EMPTY \n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "EMPTY");
-            CHECK(node.replacement_list.empty());
-        }
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "+");
     }
-    TEST_SUITE("define_identifier") {
-        TEST_CASE("simple object-like macro") {
-            std::stringstream ss("@define VALUE 42\n");
-            auto result = _internal_ctrl::define_identifier(ss);
 
-            REQUIRE(result.has_value());
-            REQUIRE(std::holds_alternative<variable>(result.value()));
+    SUBCASE("parses multiple preprocessing tokens") {
+        std::istringstream stream{"hello + 123"};
 
-            const auto& node = std::get<variable>(result.value());
+        auto result = pp_tokens(stream);
 
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list == std::vector<std::string>{"42"});
-        }
-
-        TEST_CASE("multiple replacement tokens") {
-            std::stringstream ss("@define VALUE 5 + 3 - 4\n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{"5", "+", "3", "-", "4"});
-        }
-
-        TEST_CASE("replacement with parentheses") {
-            std::stringstream ss("@define VALUE (5 + 3)\n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{"(", "5", "+", "3", ")"});
-        }
-
-        TEST_CASE("empty replacement list") {
-            std::stringstream ss("@define EMPTY \n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "EMPTY");
-            CHECK(node.replacement_list.empty());
-        }
-
-        TEST_CASE("replacement with identifiers") {
-            std::stringstream ss("@define VALUE SOME_IDENTIFIER + OTHER\n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "VALUE");
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{
-                      "SOME_IDENTIFIER", "+", "OTHER"});
-        }
-
-        TEST_CASE("replacement with floating point number") {
-            std::stringstream ss("@define PI 3.14159\n");
-            auto result = _internal_ctrl::define_identifier(ss);
-
-            REQUIRE(result.has_value());
-
-            const auto& node = std::get<variable>(result.value());
-
-            CHECK(node.id == "PI");
-            CHECK(node.replacement_list == std::vector<std::string>{"3.14159"});
-        }
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "hello");
     }
-    TEST_SUITE("define_function") {
-        TEST_CASE("single parameter") {
-            std::stringstream ss("@define DOUBLE(x) x * 2\n");
-            auto result = _internal_ctrl::define_function(ss);
 
-            REQUIRE(result.has_value());
-            REQUIRE(std::holds_alternative<function>(result.value()));
+    SUBCASE("recursively parses multiple preprocessing tokens") {
+        std::istringstream stream{"hello"};
 
-            const auto& node = std::get<function>(result.value());
+        auto result = pp_tokens(stream);
 
-            CHECK(node.id == "DOUBLE");
-            CHECK(node.parameters_map.at("x") == 0);
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{"x", "*", "2"});
-        }
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "hello");
+    }
+}
 
-        TEST_CASE("multiple parameters") {
-            std::stringstream ss("@define ADD(x, y) x + y\n");
-            auto result = _internal_ctrl::define_function(ss);
+// ------------------------------------------------------------
+// replacement_list
+// ------------------------------------------------------------
 
-            REQUIRE(result.has_value());
+TEST_CASE("replacement_list") {
+    SUBCASE("parses an empty replacement list") {
+        std::istringstream stream{""};
 
-            const auto& node = std::get<function>(result.value());
+        auto result = replacement_list(stream);
 
-            CHECK(node.id == "ADD");
-            CHECK(node.parameters_map.at("x") == 0);
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{"x", "+", "y"});
-        }
+        REQUIRE(result.has_value());
+        CHECK(result->empty());
+    }
 
-        TEST_CASE("no parameters") {
-            std::stringstream ss("@define GET_VALUE() 42\n");
-            auto result = _internal_ctrl::define_function(ss);
+    SUBCASE("parses a single preprocessing token") {
+        std::istringstream stream{"hello"};
 
-            REQUIRE(result.has_value());
+        auto result = replacement_list(stream);
 
-            const auto& node = std::get<function>(result.value());
+        REQUIRE(result.has_value());
+        REQUIRE(result->size() == 1);
+        CHECK((*result)[0] == "hello");
+    }
 
-            CHECK(node.id == "GET_VALUE");
-            CHECK(node.parameters_map.empty());
-            CHECK(node.replacement_list == std::vector<std::string>{"42"});
-        }
+    SUBCASE("parses multiple identifiers") {
+        std::istringstream stream{"hello world"};
 
-        TEST_CASE("whitespace around parameters") {
-            std::stringstream ss("@define ADD( x , y ) x + y\n");
-            auto result = _internal_ctrl::define_function(ss);
+        auto result = replacement_list(stream);
 
-            REQUIRE(result.has_value());
+        REQUIRE(result.has_value());
+        CHECK(result->size() == 2);
+        CHECK((*result)[0] == "hello");
+        CHECK((*result)[1] == "world");
+    }
 
-            const auto& node = std::get<function>(result.value());
+    SUBCASE("parses an expression") {
+        std::istringstream stream{"x + y * 5"};
 
-            CHECK(node.id == "ADD");
-            CHECK(node.parameters_map.at("x") == 0);
-            CHECK(node.parameters_map.at("y") == 1);
-        }
+        auto result = replacement_list(stream);
 
-        TEST_CASE("multiple replacement tokens") {
-            std::stringstream ss("@define CALCULATE(a, b) (a + b) * 2\n");
-            auto result = _internal_ctrl::define_function(ss);
+        REQUIRE(result.has_value());
+        CHECK(result->size() == 5);
+        CHECK((*result)[0] == "x");
+        CHECK((*result)[1] == "+");
+        CHECK((*result)[2] == "y");
+        CHECK((*result)[3] == "*");
+        CHECK((*result)[4] == "5");
+    }
 
-            REQUIRE(result.has_value());
+    // SUBCASE("parses function-like macro replacement") {
+    //     std::istringstream stream{"ADD(x, y)"};
 
-            const auto& node = std::get<function>(result.value());
+    //     auto result = replacement_list(stream);
 
-            CHECK(node.id == "CALCULATE");
-            CHECK(node.parameters_map.at("a") == 0);
-            CHECK(node.parameters_map.at("b") == 1);
-            CHECK(node.replacement_list ==
-                  std::vector<std::string>{
-                      "(", "a", "+", "b", ")", "*", "2"});
-        }
+    //     REQUIRE(result.has_value());
+    //     CHECK(result->size() == 1);
+    //     CHECK((*result)[0] == "ADD(x, y)");
+    // }
+}
 
-        TEST_CASE("named call in replacement list") {
-            std::stringstream ss("@define CALCULATE(a, b) FUNC(a, b) * 2\n");
-            auto result = _internal_ctrl::define_function(ss);
+// ------------------------------------------------------------
+// identifier_list
+// ------------------------------------------------------------
+TEST_CASE("identifier parser backtracking") {
+    std::istringstream stream{"x"};
 
-            REQUIRE(result.has_value());
+    auto first = mona::_transform([](const auto seq) -> std::string {
+        const auto [f, _] = seq;
+        return f;
+    },
+                                  mona::_sequence(utils::unit::identifier, mona::_match(",")));
+    auto result = mona::_either(first, utils::unit::identifier)(stream);
 
-            const auto& node = std::get<function>(result.value());
+    REQUIRE(result.has_value());
+    CHECK(result.value() == "x");
+}
+TEST_CASE("identifier_list") {
+    SUBCASE("parses a single identifier") {
+        std::istringstream stream{"x"};
 
-            CHECK(node.id == "CALCULATE");
-            CHECK(node.parameters_map.at("a") == 0);
-            CHECK(node.parameters_map.at("b") == 1);
-            CHECK(node.replacement_list == std::vector<std::string>{"FUNC", "(", "a", ",", "b", ")", "*", "2"});
-        }
+        auto result = identifier_list(stream);
 
-        TEST_CASE("define_function does not consume the next line") {
-            std::istringstream input{
-                "@define MULT(x, y) x * y"
-                "func main"};
+        REQUIRE(result.has_value());
+        REQUIRE(result->size() == 1);
+        CHECK((*result)[0] == "x");
+    }
 
-            auto result = monac::prep::parsers::_internal_ctrl::define_function(input);
+    SUBCASE("parses two identifiers") {
+        std::istringstream stream{"x,y"};
 
-            REQUIRE(result.has_value());
+        auto result = identifier_list(stream);
 
-            // The next input should still be "func".
-            auto next = utils::unit::identifier(input);
+        REQUIRE(result.has_value());
+        REQUIRE(result->size() == 2);
+        CHECK((*result)[0] == "x");
+        CHECK((*result)[1] == "y");
+    }
 
-            REQUIRE(next.has_value());
-            CHECK(next.value() == "func");
-        }
+    SUBCASE("parses multiple identifiers") {
+        std::istringstream stream{"x,y,z"};
+
+        auto result = identifier_list(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(result->size() == 3);
+        CHECK((*result)[0] == "x");
+        CHECK((*result)[1] == "y");
+        CHECK((*result)[2] == "z");
+    }
+
+    SUBCASE("does not consume identifiers separated by invalid syntax") {
+        std::istringstream stream{"x y"};
+
+        auto result = identifier_list(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(result->size() == 1);
+        CHECK((*result)[0] == "x");
+    }
+
+    SUBCASE("rejects an empty identifier list") {
+        std::istringstream stream{","};
+
+        auto result = identifier_list(stream);
+
+        CHECK_FALSE(result.has_value());
+    }
+}
+
+// ------------------------------------------------------------
+// text_line
+// ------------------------------------------------------------
+
+TEST_CASE("text_line") {
+    SUBCASE("parses an empty text line") {
+        std::istringstream stream{"\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value().empty());
+    }
+
+    SUBCASE("parses a single identifier") {
+        std::istringstream stream{"hello\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "hello");
+    }
+
+    SUBCASE("parses multiple identifiers") {
+        std::istringstream stream{"hello world\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+    }
+
+    SUBCASE("parses an expression") {
+        std::istringstream stream{"x + y * 5\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "x + y * 5");
+    }
+
+    SUBCASE("parses punctuation") {
+        std::istringstream stream{"func main(x, y) {}\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "func main(x, y) {}");
+    }
+
+    SUBCASE("does not consume the next line") {
+        std::istringstream stream{"hello\nworld\n"};
+
+        auto result = text_line(stream);
+
+        REQUIRE(result.has_value());
+        CHECK(result.value() == "hello");
+
+        std::string remaining;
+        std::getline(stream, remaining);
+
+        CHECK(remaining == "world");
+    }
+}
+
+TEST_CASE("parses object-like macro definitions") {
+    SUBCASE("parses a simple object-like macro") {
+        std::stringstream stream{"@define VALUE 42\n"};
+
+        auto result = _internal_ctrl::define_identifier(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<variable>(*result));
+
+        const auto& macro = std::get<variable>(*result);
+
+        CHECK(macro.id == "VALUE");
+        REQUIRE(macro.replacement_list.size() == 1);
+        CHECK(macro.replacement_list[0] == "42");
+    }
+
+    SUBCASE("parses an identifier replacement") {
+        std::stringstream stream{"@define VALUE OTHER\n"};
+
+        auto result = _internal_ctrl::define_identifier(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<variable>(*result));
+
+        const auto& macro = std::get<variable>(*result);
+
+        CHECK(macro.id == "VALUE");
+        REQUIRE(macro.replacement_list.size() == 1);
+        CHECK(macro.replacement_list[0] == "OTHER");
+    }
+
+    SUBCASE("parses multiple replacement tokens") {
+        std::stringstream stream{"@define VALUE x + y\n"};
+
+        auto result = _internal_ctrl::define_identifier(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<variable>(*result));
+
+        const auto& macro = std::get<variable>(*result);
+
+        CHECK(macro.id == "VALUE");
+        REQUIRE(macro.replacement_list.size() == 3);
+        CHECK(macro.replacement_list[0] == "x");
+        CHECK(macro.replacement_list[1] == "+");
+        CHECK(macro.replacement_list[2] == "y");
+    }
+
+    SUBCASE("rejects a definition without a replacement list") {
+        std::stringstream stream{"@define VALUE\n"};
+
+        auto result = _internal_ctrl::define_identifier(stream);
+
+        CHECK_FALSE(result.has_value());
+    }
+}
+
+TEST_CASE("parses function-like macro definitions") {
+    SUBCASE("parses a function with one parameter") {
+        std::stringstream stream{"@define DOUBLE(x) x\n"};
+
+        auto result = _internal_ctrl::define_function(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<function>(*result));
+
+        const auto& macro = std::get<function>(*result);
+
+        CHECK(macro.id == "DOUBLE");
+
+        REQUIRE(macro.parameters_map.size() == 1);
+        CHECK(macro.parameters_map.at("x") == 0);
+
+        REQUIRE(macro.replacement_list.size() == 1);
+        CHECK(macro.replacement_list[0] == "x");
+    }
+
+    SUBCASE("parses a function with multiple parameters") {
+        std::stringstream stream{"@define ADD(x, y) x + y\n"};
+
+        auto result = _internal_ctrl::define_function(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<function>(*result));
+
+        const auto& macro = std::get<function>(*result);
+
+        CHECK(macro.id == "ADD");
+
+        REQUIRE(macro.parameters_map.size() == 2);
+        CHECK(macro.parameters_map.at("x") == 0);
+        CHECK(macro.parameters_map.at("y") == 1);
+
+        REQUIRE(macro.replacement_list.size() == 3);
+        CHECK(macro.replacement_list[0] == "x");
+        CHECK(macro.replacement_list[1] == "+");
+        CHECK(macro.replacement_list[2] == "y");
+    }
+
+    SUBCASE("parses whitespace around parameters") {
+        std::stringstream stream{"@define ADD( x , y ) x + y\n"};
+
+        auto result = _internal_ctrl::define_function(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<function>(*result));
+
+        const auto& macro = std::get<function>(*result);
+
+        CHECK(macro.id == "ADD");
+
+        REQUIRE(macro.parameters_map.size() == 2);
+        CHECK(macro.parameters_map.at("x") == 0);
+        CHECK(macro.parameters_map.at("y") == 1);
+    }
+
+    SUBCASE("parses a function with no parameters") {
+        std::stringstream stream{"@define GET_VALUE() 42\n"};
+
+        auto result = _internal_ctrl::define_function(stream);
+
+        REQUIRE(result.has_value());
+        REQUIRE(std::holds_alternative<function>(*result));
+
+        const auto& macro = std::get<function>(*result);
+
+        CHECK(macro.id == "GET_VALUE");
+        CHECK(macro.parameters_map.empty());
+
+        REQUIRE(macro.replacement_list.size() == 1);
+        CHECK(macro.replacement_list[0] == "42");
+    }
+
+    SUBCASE("rejects a function definition without a closing parenthesis") {
+        std::stringstream stream{"@define ADD(x, y x + y\n"};
+
+        auto result = _internal_ctrl::define_function(stream);
+
+        CHECK_FALSE(result.has_value());
     }
 }

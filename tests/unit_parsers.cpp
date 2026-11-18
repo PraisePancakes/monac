@@ -377,7 +377,7 @@ TEST_SUITE("unit parsers") {
             CHECK(utils::unit::preprocessing_token(ss).value() == token);
         }
 
-        std::istringstream invalid{"@"};
+        std::istringstream invalid{" "};
         CHECK_FALSE(utils::unit::preprocessing_token(invalid));
     }
 }

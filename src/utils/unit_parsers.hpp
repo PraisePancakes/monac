@@ -30,10 +30,9 @@ inline auto single_unit_punctuator = mona::_any(mona::_match("#"), mona::_match(
                                                 mona::_match("-"), mona::_match("*"), mona::_match("%"),
                                                 mona::_match("&"), mona::_match("|"), mona::_match("^"),
                                                 mona::_match("~"), mona::_match("!"), mona::_match("="),
-                                                mona::_match("<"), mona::_match(">"));
+                                                mona::_match("<"), mona::_match(">"), mona::_match(","));
 
-inline auto preprocessing_op_or_punc = mona::_any(triple_unit_punctuator, double_unit_punctuator, single_unit_punctuator, mona::_match(","));
-inline auto argument_op_or_punc = mona::_any(triple_unit_punctuator, double_unit_punctuator, single_unit_punctuator);
+inline auto preprocessing_op_or_punc = mona::_any(triple_unit_punctuator, double_unit_punctuator, single_unit_punctuator);
 inline auto escape_sequence = mona::_transform(
     [](const auto tup) -> std::string {
         const auto [slash, escaped] = tup;
@@ -137,8 +136,9 @@ inline auto identifier = mona::_transform([](const auto tup) -> std::string {
     return ret;
 },
                                           mona::_sequence(identifier_nondigit, mona::_many_or_none(mona::_either(identifier_nondigit, digit))));
-inline auto preprocessing_token = mona::_any(identifier, pp_number, character_literal, string_literal, preprocessing_op_or_punc);
-inline auto argument_token = mona::_any(identifier, pp_number, character_literal, string_literal, argument_op_or_punc);
+inline auto preprocessing_token = mona::_any(identifier, pp_number, character_literal, string_literal, preprocessing_op_or_punc, mona::_symbols_ex(' ', '\n', '\r', '\t'));
+
+inline auto args_value = mona::_any(identifier, pp_number, character_literal, string_literal);
 
 };  // namespace utils::unit
 #endif

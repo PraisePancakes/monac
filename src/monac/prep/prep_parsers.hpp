@@ -6,33 +6,37 @@
 
 #include "../../utils/unit_parsers.hpp"
 namespace monac::prep::parsers {
-
-namespace _internal {
-inline auto identifier_separator = mona::_sequence(utils::unit::opt_white_space, mona::_match(','), utils::unit::opt_white_space, utils::unit::identifier);
-
-};  // namespace _internal
-inline auto identifier_list = mona::_transform(
-    [](const auto tup) -> std::vector<std::string> {
-        const auto& [first, rest] = tup;
-        std::vector<std::string> ret{first};
-        for (const auto& [_, _, _, id] : rest) ret.push_back(id);
-        return ret;
-    },
-    mona::_sequence(utils::unit::identifier, mona::_many_or_none(_internal::identifier_separator)));
+inline mona::parser<std::string> pp_tokens = mona::_either(mona::_transform([](const auto seq) -> std::string {
+                                                               const auto [left, right] = seq;
+                                                               return left + right;
+                                                           },
+                                                                            mona::_sequence(utils::unit::preprocessing_token, mona::_defer([]() -> mona::parser<std::string> {
+                                                                                                return pp_tokens;
+                                                                                            }))),
+                                                           utils::unit::preprocessing_token);
 
 inline auto replacement_list = mona::_transform([](const auto vec) -> std::vector<std::string> {
     std::vector<std::string> ret{};
     for (const auto [tok, _] : vec) ret.push_back(tok);
     return ret;
 },
-                                                mona::_many_or_none(mona::_sequence(utils::unit::preprocessing_token, utils::unit::opt_white_space)));
-inline auto text_line = mona::_transform([](const auto seq) -> std::vector<std::string> {
-    std::vector<std::string> ret{};
-    auto [vec, _] = seq;
-    for (const auto tok : vec) ret.push_back(tok);
+                                                mona::_many_or_none(mona::_sequence(pp_tokens, utils::unit::opt_white_space)));
+inline mona::parser<std::vector<std::string>> identifier_list = mona::_either(mona::_transform([](const auto seq) -> std::vector<std::string> {
+                                                                                  const auto [id, _, _, _, rest] = seq;
+                                                                                  std::vector<std::string> ret{id};
+                                                                                  for (const auto& v : rest) ret.push_back(v);
+                                                                                  return ret;
+                                                                              },
+                                                                                               mona::_sequence(utils::unit::identifier, utils::unit::opt_white_space, mona::_match(","), utils::unit::opt_white_space, mona::_defer([]() -> mona::parser<std::vector<std::string>> { return identifier_list; }))),
+                                                                              mona::_transform([](const auto id) -> std::vector<std::string> { return {id}; }, utils::unit::identifier));
+
+inline auto text_line = mona::_transform([](const auto seq) -> std::string {
+    std::string ret{""};
+    const auto [v, _] = seq;
+    for (const auto [t, sp] : v) ret.append(t).append(sp);
     return ret;
 },
-                                         mona::_sequence(mona::_many_or_none(utils::unit::preprocessing_token), utils::unit::new_line));
+                                         mona::_sequence(mona::_many_or_none(mona::_sequence(pp_tokens, utils::unit::opt_white_space)), utils::unit::new_line));
 
 struct variable {
     std::string id;
