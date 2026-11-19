@@ -79,9 +79,10 @@ class preprocessor {
                            std::stringstream new_stream;
                            for (auto i{0uz}; i < func.replacement_list.size(); i++) {
                                std::string r = func.replacement_list[i];
-                               if (func.parameters_map.contains(r))
+                               if (func.parameters_map.contains(r)) {
                                    new_stream << args_map.at(func.parameters_map.at(r));
-                               else
+
+                               } else
                                    new_stream << r;
                                if (i < func.replacement_list.size() - 1) new_stream << ' ';
                            };
