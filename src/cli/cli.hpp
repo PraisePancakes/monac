@@ -2,6 +2,7 @@
 #define CLI_HPP
 #include <istream>
 #include <mona/mona.hpp>
+#include <unordered_set>
 
 #include "../cfg/version.hpp"
 #include "../globals/logger.hpp"
@@ -27,32 +28,37 @@ class cli_except final : public std::exception {
     X(FLAG_VERSION, "version", 'v', 1 << 1) \
     X(FLAG_OUTPUT, "output", 'o', 1 << 2)   \
     X(FLAG_INPUT, "input", 'i', 1 << 3)     \
-    X(FLAG_MODULE, "module", 'm', 1 << 4)
+    X(FLAG_MODULE, "module", 'm', 1 << 4)   \
+    X(FLAG_NORM, "norm", 'N', 1 << 5)       \
+    X(FLAG_PREP, "prep", 'P', 1 << 6)
 
 class args final {
-    using flag_t = std::uint8_t;
+    using flag_t = std::uint32_t;
     std::stringstream m_arguments;
     std::string m_usage;
+
+   public:
     enum class CLI_FLAGS : flag_t {
 #define X(e, _, __, v) e = v,
         FLAG_ENTRY_LIST
 #undef X
     };
+   private:
     flag_t m_flags{0};
 
     struct cli_info {
         std::vector<std::filesystem::path> input_paths;
         std::vector<std::filesystem::path> module_paths;
         std::vector<std::filesystem::path> all_paths;
-        std::string output;
+        std::vector<std::filesystem::path> to_normalize;
+        std::vector<std::filesystem::path> to_preprocess;
+        std::filesystem::path output;
     } m_info;
     void set_flag(CLI_FLAGS flag) {
         m_flags |= static_cast<flag_t>(flag);
     };
-    bool is_set(CLI_FLAGS flag) {
-        return (m_flags & static_cast<flag_t>(flag));
-    }
-    bool any_set() {
+
+    bool any_set() const {
 #define X(e, _, __, ___) \
     if (is_set(CLI_FLAGS::e)) return true;
         FLAG_ENTRY_LIST
@@ -73,36 +79,50 @@ class args final {
 #undef X
         return false;
     };
-    void parse_FLAG_INPUT() {
-        set_flag(CLI_FLAGS::FLAG_INPUT);
+
+    template <typename ErrorCheckCallback, typename ProcessCallback>
+    void _for_each_validate_then_process(ErrorCheckCallback&& check_err, ProcessCallback&& process) {
         while (!mona::_eof()(m_arguments)) {
             unit::opt_white_space(m_arguments);
-            auto sng = mona::_check(parsers::single_flag)(m_arguments);
-            auto dub = mona::_check(parsers::double_flag)(m_arguments);
-            if (sng.has_value() || dub.has_value()) break;
+            auto sng_should_finish = mona::_check(parsers::single_flag)(m_arguments);
+            auto dub_should_finish = mona::_check(parsers::double_flag)(m_arguments);
+            if (sng_should_finish.has_value() || dub_should_finish.has_value()) break;
             auto file = parsers::directory(m_arguments);
+            if (!file.has_value()) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("File Parser error: {}", file.error())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            }
             std::filesystem::path fp{file.value()};
-            if (!std::filesystem::exists(fp) || !fp.has_extension()) {
-                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined input path: {}", fp.string())}, std::cerr);
-                throw cli_except("Cli couldn't find input files");
-            }
-            if (fp.extension() != ".mx") {
-                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined extension: input file {} requires an .mx extension", fp.string())}, std::cerr);
-                throw cli_except("Cli couldn't find input files");
-            }
-            if (file.has_value()) {
-                m_info.input_paths.push_back(fp);
-                m_info.all_paths.push_back(fp);
-            }
+            check_err(fp);
+            process(fp);
             unit::opt_white_space(m_arguments);
         }
+    };
+
+    void parse_FLAG_INPUT() {
+        set_flag(CLI_FLAGS::FLAG_INPUT);
+        _for_each_validate_then_process([&](std::filesystem::path check_path) {
+                 if (!std::filesystem::exists(check_path) || !check_path.has_extension()) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, 
+                .what = std::format("Undefined input path: {}", check_path.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            }
+            if (check_path.extension() != ".mx") {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, 
+                .what = std::format("Undefined extension: input file {} requires an .mx extension", check_path.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            } },
+                                        [&](std::filesystem::path process_path) {
+                                            m_info.input_paths.push_back(process_path);
+                                            m_info.all_paths.push_back(process_path);
+                                        });
     };
     void parse_FLAG_OUTPUT() {
         set_flag(CLI_FLAGS::FLAG_OUTPUT);
         unit::opt_white_space(m_arguments);
-        auto sng = mona::_check(parsers::single_flag)(m_arguments);
-        auto dub = mona::_check(parsers::double_flag)(m_arguments);
-        if (sng.has_value() || dub.has_value()) {
+        auto sng_should_finish = mona::_check(parsers::single_flag)(m_arguments);
+        auto dub_should_finish = mona::_check(parsers::double_flag)(m_arguments);
+        if (sng_should_finish.has_value() || dub_should_finish.has_value()) {
             glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "Missing output files"}, std::cerr);
             throw cli_except("Cli couldn't parse output files");
         };
@@ -116,23 +136,34 @@ class args final {
 
     void parse_FLAG_MODULE() {
         set_flag(CLI_FLAGS::FLAG_MODULE);
-        while (!mona::_eof()(m_arguments)) {
-            unit::opt_white_space(m_arguments);
-            auto sng = mona::_check(parsers::single_flag)(m_arguments);
-            auto dub = mona::_check(parsers::double_flag)(m_arguments);
-            if (sng.has_value() || dub.has_value()) break;
-            auto file = parsers::directory(m_arguments);
-            std::filesystem::path fp{file.value()};
-            if (!std::filesystem::exists(fp)) {
-                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = std::format("Undefined module path: {}", fp.string())}, std::cerr);
+        _for_each_validate_then_process([&](std::filesystem::path path) {
+            if (!std::filesystem::exists(path)) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, 
+                    .what = std::format("Undefined module path: {}", path.string())}, std::cerr);
                 throw cli_except("Cli couldn't find input files");
-            }
-            if (file.has_value()) {
-                m_info.module_paths.push_back(fp);
-                m_info.all_paths.push_back(fp);
-            }
-            unit::opt_white_space(m_arguments);
-        }
+            } }, [&](std::filesystem::path path) {
+                  m_info.module_paths.push_back(path);
+                m_info.all_paths.push_back(path); });
+    };
+
+    void parse_FLAG_NORM() {
+        set_flag(CLI_FLAGS::FLAG_NORM);
+        _for_each_validate_then_process([&](std::filesystem::path check_path) {
+             if (!std::filesystem::exists(check_path) || !check_path.has_extension()) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, 
+                .what = std::format("Undefined input path to normalize: {}", check_path.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            } }, [&](std::filesystem::path path) { m_info.to_normalize.push_back(path); });
+    };
+
+    void parse_FLAG_PREP() {
+        set_flag(CLI_FLAGS::FLAG_PREP);
+        _for_each_validate_then_process([&](std::filesystem::path check_path) {
+             if (!std::filesystem::exists(check_path) || !check_path.has_extension()) {
+                glob::logger::instance().log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, 
+                .what = std::format("Undefined input path to preprocess: {}", check_path.string())}, std::cerr);
+                throw cli_except("Cli couldn't find input files");
+            } }, [&](std::filesystem::path path) { m_info.to_preprocess.push_back(path); });
     };
     void parse_FLAG_HELP() {
         set_flag(CLI_FLAGS::FLAG_HELP);
@@ -144,7 +175,6 @@ class args final {
     void parse_command() {
         // don't touch this. X-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
         unit::opt_white_space(m_arguments);
-        auto before = m_arguments.tellg();
         // must parse some options
         auto sng = parsers::single_flag(m_arguments);
         auto dub = parsers::double_flag(m_arguments);
@@ -187,6 +217,23 @@ class args final {
             throw cli_except("Cli couldn't read usage data");
         }
     };
+
+    template <typename... Flags>
+        requires(std::is_same_v<Flags, CLI_FLAGS> && ...)
+    bool is_set_and(Flags... flags) {
+        return (is_set(flags) && ...);
+    }
+
+    template <typename... Flags>
+        requires(std::is_same_v<Flags, CLI_FLAGS> && ...)
+    bool is_set_or(Flags... flags) {
+        return (is_set(flags) || ...);
+    }
+
+    bool is_set(CLI_FLAGS flag) const {
+        return (m_flags & static_cast<flag_t>(flag));
+    }
+
     void parse() {
         auto entry_parser = mona::_match("monac", "missing entry")(m_arguments);
         if (!entry_parser.has_value()) {
@@ -198,7 +245,7 @@ class args final {
             parse_command();
     };
 
-    cli_info execute() {
+    cli_info execute() const {
         if (!any_set()) {
             glob::out.log(glob::log_info{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No commands see 'monac --help' for more."}, std::cerr);
             throw cli_except("Cli couldn't parse commands");
