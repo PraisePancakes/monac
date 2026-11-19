@@ -29,8 +29,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(mona)
 
-
-
 add_executable(${PROJECT_NAME} 
     main.cpp 
 )
