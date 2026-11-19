@@ -1,0 +1,13 @@
+
+import module Math;
+
+@define LIST       \
+        X(1, 2, 3) \
+        X(4, 5, 6)
+
+func main(x: i32, y: char**) -> i32 {
+    
+    @define X(a, b, c) a = b = c; 
+            LIST 
+    return 0;
+}
