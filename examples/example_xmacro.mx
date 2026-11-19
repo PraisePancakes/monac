@@ -10,4 +10,11 @@ func main(x: i32, y: char**) -> i32 {
     @define X(a, b, c) a = b = c; 
             LIST 
     return 0;
+
+
+    /* 
+        TEST NO COMMENT
+    
+    
+    */
 }

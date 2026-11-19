@@ -124,14 +124,9 @@ class preprocessor {
         std::stringstream stream{m_normalized};
         while (!mona::_eof()(stream)) {
             if (mona::_match("//")(stream))
-                while (!mona::_eof()(stream) && !utils::unit::new_line(stream)) {
-                    stream.get();
-                };
-            if (mona::_match("/*")(stream)) {
-                while (!mona::_eof()(stream) && mona::_match("*/")(stream)) {
-                    stream.get();
-                };
-            }
+                while (!mona::_eof()(stream) && !utils::unit::new_line(stream)) stream.get();
+            if (mona::_match("/*")(stream))
+                while (!mona::_eof()(stream) && !mona::_match("*/")(stream)) stream.get();
 
             auto control = parsers::control_line(stream);
             if (control) {
