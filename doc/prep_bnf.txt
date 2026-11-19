@@ -18,10 +18,9 @@
                  | @ define <idenfifier>( <identifier-list>, ... ) <replacement-list> <new-line>
                  | @ undef  <identifier> <new-line>
                  | @ <new-line>
-<text-line> ::= <pp-tokens>* <new-line>
+<text-line> ::= <preprocessing-token>* <new-line>
 <identifier-list> ::= <identifier> | EBNF_GROUP(<identifier-list> , <identifier>)
-<replacement-list> ::= <pp-tokens>*
-<pp-tokens> ::= <preprocessing-token> <pp-tokens> |  <preprocessing-token> 
+<replacement-list> ::= <preprocessing-token>*
 
 # UNIT PARSERS
 <preprocessing-token> ::= <identifier> | <pp-number> | <character-literal> |  <string-literal> | <preprocessing-op-or-punc>

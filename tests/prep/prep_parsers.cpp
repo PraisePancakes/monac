@@ -9,57 +9,6 @@
 using namespace monac::prep::parsers;
 
 // ------------------------------------------------------------
-// pp_tokens
-// ------------------------------------------------------------
-
-TEST_CASE("pp_tokens") {
-    SUBCASE("parses a single identifier") {
-        std::istringstream stream{"hello"};
-
-        auto result = pp_tokens(stream);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "hello");
-    }
-
-    SUBCASE("parses a single number") {
-        std::istringstream stream{"123"};
-
-        auto result = pp_tokens(stream);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "123");
-    }
-
-    SUBCASE("parses a single operator") {
-        std::istringstream stream{"+"};
-
-        auto result = pp_tokens(stream);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "+");
-    }
-
-    SUBCASE("parses multiple preprocessing tokens") {
-        std::istringstream stream{"hello + 123"};
-
-        auto result = pp_tokens(stream);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "hello");
-    }
-
-    SUBCASE("recursively parses multiple preprocessing tokens") {
-        std::istringstream stream{"hello"};
-
-        auto result = pp_tokens(stream);
-
-        REQUIRE(result.has_value());
-        CHECK(result.value() == "hello");
-    }
-}
-
-// ------------------------------------------------------------
 // replacement_list
 // ------------------------------------------------------------
 
