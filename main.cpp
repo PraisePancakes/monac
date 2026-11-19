@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
             //   5) static analysis                                                                                                                   ||
             //   6) whatever the f*ck else                                                                                                            ||
             //   7) generate asm                                                                                                                      ||
+            //   9) optimization passes                                                                                                               ||
             //   8) link                                                                                                                              ||
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
                               std::clog);
                 auto prep_info = prep.process();
             });
-                }
+        }
 
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
