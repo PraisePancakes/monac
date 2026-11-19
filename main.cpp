@@ -80,6 +80,8 @@ int main(int argc, char** argv) {
                 MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.to_preprocess, [&](std::stringstream& ss, const std::filesystem::path path) {
                     monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                     auto prep_info = prep.process();
+                    std::stringstream to_normalize{prep_info.expanded};
+                    prep_info.expanded = monac::prep::normalizer{to_normalize}.process();
                     glob::log_info li{.type = glob::log_info::LOG_TYPE::INFO,
                                       .what = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), prep_info.expanded)};
                     glob::out.log(li, std::clog);

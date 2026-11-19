@@ -7,7 +7,6 @@ namespace utils::unit {
 inline auto white_space = mona::_either(mona::_match(' '), mona::_match('\t'));
 inline auto at_least_space = mona::_transform([](auto) -> std::string { return " "; }, mona::_many_or_one(white_space));
 inline auto opt_white_space = mona::_transform([](auto v) -> std::string {
-    if (v.empty()) return "";
     return " ";
 },
                                                mona::_many_or_none(white_space));

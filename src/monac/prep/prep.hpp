@@ -142,6 +142,7 @@ class preprocessor {
             } else
                 _m_info.expanded += stream.get();
         };
+
         return _m_info;
     };
 };
