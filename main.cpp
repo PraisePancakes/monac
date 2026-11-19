@@ -87,8 +87,27 @@ int main(int argc, char** argv) {
             }
 
         } else {
-            //////////////////////////////// FULL COMPILATION ////////////////////////////////
-            // preprocess (go through every file .mm/.mx and expand macro defs)
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //                                                                                                                                        ||
+            //    ▄██▀▄▀█▄  ▄██▀█▄  ▄██▀█▄  ▄██▀█▄  ███▀██       ███▀██  ▄██▀█▄  ▄██▀▄▀█▄  ███▀█▄  ███  ███     ▄██▀█▄ █▀███▀██  ███  ▄██▀█▄  ▄██▀█▄  ||
+            //    ███ █ ██ ▀███ ██ ▀███ ██  ███ ██ ▄███         ▄███    ▀███ ██  ███ █ ██ ▀███▀▀▀  ███ ▀███     ███ ██   ███     ███ ▀███ ██ ▀███ ██  ||
+            //   ▀███   ██  ███ ██  ███ ██ ▀███▀██  ███ ▄▄       ███ ▄▄  ███ ██ ▀███   ██  ███    ▀███  ███ ▄▄ ▀███▀██   ███    ▀███  ███ ██  ███ ██  ||
+            //    ▀▀▀    ▀  ▀▀▀▀▀   ▀▀▀ ▀▀  ▀▀▀ ▀▀   ▀▀▀▀▀        ▀▀▀▀▀  ▀▀▀▀▀   ▀▀▀    ▀  ▀▀▀     ▀▀▀   ▀▀▀▀▀  ▀▀▀ ▀▀   ▀▀▀     ▀▀▀  ▀▀▀▀▀   ▀▀▀ ▀▀  ||                                                     //
+            //========================================================================================================================================||
+            //   0) preprocess (go through every file .mm/.mx and expand macro defs)                                                                  ||
+            //   1) mds (module dependancy scheduler)                                                                                                 ||
+            //      * go through all modules                                                                                                          ||
+            //      * set up the DAG, sort them topologically                                                                                         ||
+            //   2) bmi (built module interface) keep in outer scope so once we build source files we can retrieve symbols from here                  ||
+            //      * recieve the sorted DAG                                                                                                          ||
+            //      * go through each module and build them (set up symbol table {exports, imports, sealed, etc..})                                   ||
+            //   3) lex                                                                                                                               ||
+            //   4) parse                                                                                                                             ||
+            //   5) static analysis                                                                                                                   ||
+            //   6) whatever the f*ck else                                                                                                            ||
+            //   7) generate asm                                                                                                                      ||
+            //   8) link                                                                                                                              ||
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
                 glob::out.log({.type = glob::log_info::LOG_TYPE::INFO,
                                .what = std::format("Beginning Compilation of Translation Unit {}", path.c_str())},
@@ -99,19 +118,7 @@ int main(int argc, char** argv) {
                               std::clog);
                 auto prep_info = prep.process();
             });
-            // mds (module dependancy schedular)
-            //  * go through all modules
-            //  * set up the DAG, sort them topologically
-            // bmi (built module interface) keep in outer scope so once we build source files we can retrieve symbols from here
-            //  * recieve the sorted DAG
-            //  * go through each module and build them (set up symbol table {exports, imports, sealed, etc..})
-            // lex
-            // parse
-            // static analysis
-            // whatever the f*ck else
-            // generate asm
-            // link
-        }
+                }
 
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
