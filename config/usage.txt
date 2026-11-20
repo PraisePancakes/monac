@@ -1,23 +1,21 @@
 ==== Monac ===
    [[USAGE]]
-monac <options...>
+monac [options] file...
 Options:
     --help                                      (-h)    Display Usage.
     --version                                   (-v)    Display Version.
-    --norm                                      (-N)    Dumps normalized file to stdout.
-    --prep                                      (-P)    Dumps expanded preprocessed file into to stdout.                                   
-    --vlex                                      (-l)    Dumps monac tokens from input file to stdout.
-    --vast                                      (-p)    Dumps monac ast from input file to stdout.
-    --vasm                                      (-a)    Dumps generated assembly from input file to stdout.
+    --norm                                      (-N)    Dumps normalized file to output or stdout.
+    --prep                                      (-P)    Dumps expanded preprocessed file into to output or stdout.                                   
+    --lex                                       (-l)    Dumps monac tokens from input file to output or stdout.
+    --ast                                       (-p)    Dumps monac ast from input file to output or stdout.
+    --asm                                       (-a)    Dumps generated assembly from input file to output or stdout.
     --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name>, defaults to "default".
-    --input  <input_file...>                    (-i)    Pipe a variadic list of input files to be compiled.
     --module <path_to_module_folder/file...>    (-m)    Pipe a variadic list of module paths to be compiled. (NOTE: if a program is modular, you must include this).
 EXAMPLES:
-    monac --input input.mx
     monac -o output -i input.mx
-    monac --vlex input.mx
-    monac --vast input.mx ast.txt
-    monac --vasm input.mx assembly.s
+    monac --lex input.mx
+    monac --ast input.mx ast.txt
+    monac --asm input.mx assembly.s
     monac -o output -i input.mx -m path/to/module
 
 

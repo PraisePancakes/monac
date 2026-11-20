@@ -3,6 +3,7 @@
 
 #include "singleton.hpp"
 namespace glob {
+
 #define LIST_OF_LOG_TYPES \
     X(FATAL)              \
     X(ERROR)              \
@@ -29,6 +30,7 @@ struct log_info {
     std::string what;
 };
 
+namespace _internal_glob {
 struct log_data {
 #define X(V) \
     unsigned int V##S;
@@ -70,5 +72,13 @@ class logger final : public singleton<logger> {
 };
 
 static logger& out = logger::instance();
+}  // namespace _internal_glob
+
+void log(log_info::LOG_TYPE type, const std::string& what, std::ostream& out_stream) {
+    _internal_glob::out.log(log_info{.type = type, .what = what}, out_stream);
+};
+void report() {
+    _internal_glob::out.report();
+};
 };  // namespace glob
 #endif

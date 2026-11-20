@@ -8,16 +8,15 @@
 #include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
 #include "src/utils/directory_manager.hpp"
-
+using namespace cli;
 template <typename ProcessCallback>
 bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, ProcessCallback&& callback) {
     for (const auto& path : to_process) {
         utils::fs::directory_manager dm{path};
         auto files = dm.resolve_directory();
         if (!utils::fs::directory_manager::validate_extension(files, ".mm", ".mx")) {
-            glob::log_info li{.type = glob::log_info::LOG_TYPE::FATAL,
-                              .what = std::format("Error validating monac file extension in path: {} => expected a .mm (module) / .mx(source) extension", path.c_str())};
-            glob::out.log(li, std::cerr);
+            glob::log_info li{};
+            glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error validating monac file extension in path: {} => expected a .mm (module) / .mx(source) extension", path.c_str()), std::cerr);
             return EXIT_FAILURE;
         };
         for (const auto& f : files) {
@@ -28,9 +27,7 @@ bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, Pro
                     ss << ifs.rdbuf();
                     callback(ss, f);
                 } else {
-                    glob::log_info li{.type = glob::log_info::LOG_TYPE::FATAL,
-                                      .what = std::format("Error opening file for I/O: {}", f.c_str())};
-                    glob::out.log(li, std::cerr);
+                    glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error opening file for I/O: {}", f.c_str()), std::cerr);
                     return EXIT_FAILURE;
                 }
             }
@@ -41,8 +38,7 @@ bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, Pro
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        glob::log_info li{.type = glob::log_info::LOG_TYPE::FATAL, .what = "No arguments passed to parse: try `monac --help` for more."};
-        glob::out.log(li, std::cerr);
+        glob::log(glob::log_info::LOG_TYPE::FATAL, "No arguments passed to parse: try `monac --help` for more.", std::cerr);
         return EXIT_FAILURE;
     }
     std::stringstream args;
@@ -55,36 +51,50 @@ int main(int argc, char** argv) {
         cli::args cli{std::move(args)};
         cli.parse();
         auto cli_info = cli.execute();
-#if defined(DEV_PEDANTIC) && DEV_PEDANTIC
-        std::cout << "modules: " << std::endl;
-        for (const auto& m : cli_info.module_paths) {
-            std::cout << m << std::endl;
-        }
-#endif
 
 #if defined(DEV_PEDANTIC) && DEV_PEDANTIC
         std::cout << "inputs (source): " << std::endl;
-        for (const auto& i : cli_info.input_paths) {
+        for (const auto& i : cli_info.all_paths) {
             std::cout << i << std::endl;
         }
 #endif
-        if (cli.is_set_or(cli::args::CLI_FLAGS::FLAG_PREP, cli::args::CLI_FLAGS::FLAG_NORM)) {
-            if (cli.is_set(cli::args::CLI_FLAGS::FLAG_NORM))
-                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.to_normalize, [&](std::stringstream& ss, const std::filesystem::path path) {
+        if (cli.is_set_or(args::CLI_FLAGS::FLAG_PREP, args::CLI_FLAGS::FLAG_NORM)) {
+            if (cli.is_set(args::CLI_FLAGS::FLAG_NORM))
+                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
                     const std::string normalized = monac::prep::normalizer{ss}.process();
-                    glob::log_info li{.type = glob::log_info::LOG_TYPE::INFO,
-                                      .what = std::format("Normalized {} with contents:\n\n{}", path.c_str(), normalized)};
-                    glob::out.log(li, std::clog);
+                    std::string contents = std::format("Normalized {} with contents:\n\n{}", path.c_str(), normalized);
+                    if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
+                        {
+                            std::ofstream ofs{cli_info.output};
+                            if (!ofs.is_open()) {
+                                glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error opening file for I/O: {}", cli_info.output.c_str()), std::cerr);
+                                return EXIT_FAILURE;
+                            }
+                            ofs << contents;
+                        };
+                    } else
+                        glob::log(glob::log_info::LOG_TYPE::INFO, contents, std::clog);
+                    return EXIT_SUCCESS;
                 });
-            if (cli.is_set(cli::args::CLI_FLAGS::FLAG_PREP)) {
-                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.to_preprocess, [&](std::stringstream& ss, const std::filesystem::path path) {
+            if (cli.is_set(args::CLI_FLAGS::FLAG_PREP)) {
+                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
                     monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                     auto prep_info = prep.process();
                     std::stringstream to_normalize{prep_info.expanded};
-                    prep_info.expanded = monac::prep::normalizer{to_normalize}.process();
-                    glob::log_info li{.type = glob::log_info::LOG_TYPE::INFO,
-                                      .what = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), prep_info.expanded)};
-                    glob::out.log(li, std::clog);
+                    std::string normalized_expansion = monac::prep::normalizer{to_normalize}.process();
+                    std::string contents = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), normalized_expansion);
+                    if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
+                        {
+                            std::ofstream ofs{cli_info.output};
+                            if (!ofs.is_open()) {
+                                glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error opening file for I/O: {}", cli_info.output.c_str()), std::cerr);
+                                return EXIT_FAILURE;
+                            }
+                            ofs << contents;
+                        };
+                    } else
+                        glob::log(glob::log_info::LOG_TYPE::INFO, contents, std::clog);
+                    return EXIT_SUCCESS;
                 });
             }
 
@@ -112,13 +122,9 @@ int main(int argc, char** argv) {
             //   8) link                                                                                                                              ||
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
-                glob::out.log({.type = glob::log_info::LOG_TYPE::INFO,
-                               .what = std::format("Beginning Compilation of Translation Unit {}", path.c_str())},
-                              std::clog);
+                glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Beginning Compilation of Translation Unit {}", path.c_str()), std::clog);
                 monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
-                glob::out.log({.type = glob::log_info::LOG_TYPE::INFO,
-                               .what = std::format("Preprocessing...\t\t{}", path.c_str())},
-                              std::clog);
+                glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
                 auto prep_info = prep.process();
             });
         }
@@ -128,6 +134,6 @@ int main(int argc, char** argv) {
         return MONAC__PROCESS__COMBINATION__STATUS;
     }
 
-    glob::out.report();
+    glob::report();
     return MONAC__PROCESS__COMBINATION__STATUS;
 };
