@@ -6,7 +6,7 @@ From the build directory run :
 
 To see some current outputs from the build directory run :
 
-`./MONAC monac -P ../examples/example_source.mx ../examples/example_xmacro.mx`
+`./MONAC monac -P ../examples/example_source.mx`
 
 # REQUIREMENTS
 

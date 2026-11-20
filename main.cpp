@@ -65,11 +65,9 @@ int main(int argc, char** argv) {
                     std::string contents = std::format("Normalized {} with contents:\n\n{}", path.c_str(), normalized);
                     if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
                         {
+                            const std::string io_error = std::format("Error opening file for I/O: {}", cli_info.output.c_str());
                             std::ofstream ofs{cli_info.output};
-                            if (!ofs.is_open()) {
-                                glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error opening file for I/O: {}", cli_info.output.c_str()), std::cerr);
-                                return EXIT_FAILURE;
-                            }
+                            if (!ofs.is_open()) return (glob::log(glob::log_info::LOG_TYPE::FATAL, io_error, std::cerr), EXIT_FAILURE);
                             ofs << contents;
                         };
                     } else
@@ -81,15 +79,13 @@ int main(int argc, char** argv) {
                     monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                     auto prep_info = prep.process();
                     std::stringstream to_normalize{prep_info.expanded};
-                    std::string normalized_expansion = monac::prep::normalizer{to_normalize}.process();
-                    std::string contents = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), normalized_expansion);
+                    const std::string normalized_expansion = monac::prep::normalizer{to_normalize}.process();
+                    const std::string contents = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), normalized_expansion);
                     if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
                         {
+                            const std::string io_error = std::format("Error opening file for I/O: {}", cli_info.output.c_str());
                             std::ofstream ofs{cli_info.output};
-                            if (!ofs.is_open()) {
-                                glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Error opening file for I/O: {}", cli_info.output.c_str()), std::cerr);
-                                return EXIT_FAILURE;
-                            }
+                            if (!ofs.is_open()) return (glob::log(glob::log_info::LOG_TYPE::FATAL, io_error, std::cerr), EXIT_FAILURE);
                             ofs << contents;
                         };
                     } else
