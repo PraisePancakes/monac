@@ -10,12 +10,12 @@ Options:
     --ast                                       (-p)    Dumps monac ast from input file to output or stdout.
     --asm                                       (-a)    Dumps generated assembly from input file to output or stdout.
     --output <exectuable_name>                  (-o)    Place the output of the compilation into a file by the name <executable_name>, defaults to "default".
-    --module <path_to_module_folder/file...>    (-m)    Pipe a variadic list of module paths to be compiled. (NOTE: if a program is modular, you must include this).
+
 EXAMPLES:
-    monac -o output -i input.mx
-    monac --lex input.mx
-    monac --ast input.mx ast.txt
-    monac --asm input.mx assembly.s
-    monac -o output -i input.mx -m path/to/module
+    monac --output output.o input.mx
+    monac --lex input.mx 
+    monac --ast input.mx -o ast.txt
+    monac --asm input.mx -o assembly.s
+    monac -o output  -m path/to/module
 
 
