@@ -121,7 +121,8 @@ int main(int argc, char** argv) {
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Beginning Compilation of Translation Unit {}", path.c_str()), std::clog);
                 monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
-                auto prep_info = prep.process();
+                const auto prep_info = prep.process();
+                
             });
         }
 
