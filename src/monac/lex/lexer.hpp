@@ -8,7 +8,7 @@ namespace monac::semantic {
 using type = token::TOKEN_TYPE;
 class lexer final : protected worm_machine<std::string> {
     unsigned int m_x{0};  // pos
-    unsigned int m_y{0};  // line
+    unsigned int m_y{1};  // line
     std::vector<token> m_tokens;
     std::string stringify() {
         std::string ret{""};
@@ -47,8 +47,8 @@ class lexer final : protected worm_machine<std::string> {
     token lex_rest(const char c) {
         if (std::isdigit(c)) {
             return lex_number();
-        } else if (std::isalpha(c)) {
-            while (std::isalnum(peek())) {
+        } else if (std::isalpha(c) || peek() == '_') {
+            while (std::isalnum(peek()) || peek() == '_') {
                 m_x++;
                 advance();
             }
