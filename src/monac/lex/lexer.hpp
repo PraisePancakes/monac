@@ -15,131 +15,143 @@ class lexer final : protected worm_machine<std::string> {
         for (const auto c : *this) ret += c;
         return ret;
     };
+
+    token create_token(type t) {
+        return token{.location{m_x, m_y}, .type = t, .value = stringify()};
+    }
+
     token lex_rest(const char c) {
         if (peek_prev() == '.' && std::isdigit(c)) {
             while (std::isdigit(peek())) {
                 m_x++;
                 advance();
             }
-            return token{.location{m_x, m_y}, .type = type::TK_NUMBER, .value = stringify()};
+            return create_token(type::TK_NUMBER);
         } else if (std::isdigit(c)) {
             while (std::isdigit(peek())) {
                 m_x++;
                 advance();
             }
-            return token{.location{m_x, m_y}, .type = type::TK_NUMBER, .value = stringify()};
+            if (peek() == '.') {
+                m_x++;
+                advance();
+            }
+            while (std::isdigit(peek())) {
+                m_x++;
+                advance();
+            }
+            return create_token(type::TK_NUMBER);
         } else if (c == '.') {
             while (std::isdigit(peek())) {
                 m_x++;
                 advance();
             }
-            return token{.location{m_x, m_y}, .type = type::TK_NUMBER, .value = stringify()};
+            return create_token(type::TK_NUMBER);
         } else if (std::isalpha(c)) {
             while (std::isalnum(peek())) {
                 m_x++;
                 advance();
             }
-            return token{.location{m_x, m_y}, .type = type::TK_IDENTIFIER, .value = stringify()};
+            return create_token(type::TK_IDENTIFIER);
         }
-        return token{.location{m_x, m_y}, .type = type::TK_UNKNOWN, .value = stringify()};
+        return create_token(type::TK_UNKNOWN);
         // ident
     };
     token lex_token(const char c) {
-        std::string value(1, c);
         switch (c) {
             case ';':
-                return token{.location{m_x, m_y}, .type = type::TK_SEMI, .value = value};
+                return create_token(type::TK_SEMI);
             case ':':
-                return token{.location{m_x, m_y}, .type = type::TK_COLON, .value = value};
+                return create_token(type::TK_COLON);
             case '.': {
                 if (std::isdigit(peek())) return lex_rest(c);
-                return token{.location{m_x, m_y}, .type = type::TK_DOT, .value = value};
+                return create_token(type::TK_DOT);
             }
             case '$':
-                return token{.location{m_x, m_y}, .type = type::TK_DOLLA, .value = value};
+                return create_token(type::TK_DOLLA);
             case '/':
-                return token{.location{m_x, m_y}, .type = type::TK_SLASH, .value = value};
+                return create_token(type::TK_SLASH);
             case '*': {
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_STAR_EQ, .value = stringify()};
+                    return create_token(type::TK_STAR_EQ);
                 }
-                return token{.location{m_x, m_y}, .type = type::TK_STAR, .value = value};
+                return create_token(type::TK_STAR);
             }
             case ',':
-                return token{.location{m_x, m_y}, .type = type::TK_COMMA, .value = value};
+                return create_token(type::TK_COMMA);
             case '(':
-                return token{.location{m_x, m_y}, .type = type::TK_LPAREN, .value = value};
+                return create_token(type::TK_LPAREN);
             case ')':
-                return token{.location{m_x, m_y}, .type = type::TK_RPAREN, .value = value};
+                return create_token(type::TK_RPAREN);
             case '[':
-                return token{.location{m_x, m_y}, .type = type::TK_LBRACE, .value = value};
+                return create_token(type::TK_LBRACE);
             case ']':
-                return token{.location{m_x, m_y}, .type = type::TK_RBRACE, .value = value};
+                return create_token(type::TK_RBRACE);
             case '{':
-                return token{.location{m_x, m_y}, .type = type::TK_LCURL, .value = value};
+                return create_token(type::TK_LCURL);
             case '}':
-                return token{.location{m_x, m_y}, .type = type::TK_RCURL, .value = value};
+                return create_token(type::TK_RCURL);
             case '=': {
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_EQUALITY, .value = stringify()};
+                    return create_token(type::TK_EQUALITY);
                 };
-                return token{.location{m_x, m_y}, .type = type::TK_EQ, .value = value};
+                return create_token(type::TK_EQ);
             };
             case '+': {
                 if (peek() == '+') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_INC, .value = stringify()};
+                    return create_token(type::TK_INC);
                 };
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_PLUS_EQ, .value = stringify()};
+                    return create_token(type::TK_PLUS_EQ);
                 }
-                return token{.location{m_x, m_y}, .type = type::TK_PLUS, .value = value};
+                return create_token(type::TK_PLUS);
             }
             case '-': {
                 if (peek() == '-') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_DEC, .value = stringify()};
+                    return create_token(type::TK_DEC);
                 };
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_MINUS_EQ, .value = stringify()};
+                    return create_token(type::TK_MINUS_EQ);
                 }
                 if (std::isdigit(peek())) return lex_rest(c);
 
-                return token{.location{m_x, m_y}, .type = type::TK_MINUS, .value = value};
+                return create_token(type::TK_MINUS);
             }
             case '!': {
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_BANG_EQ, .value = stringify()};
+                    return create_token(type::TK_BANG_EQ);
                 }
-                return token{.location{m_x, m_y}, .type = type::TK_BANG, .value = value};
+                return create_token(type::TK_BANG);
             }
             case '<': {
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_LTE, .value = stringify()};
+                    return create_token(type::TK_LTE);
                 }
-                return token{.location{m_x, m_y}, .type = type::TK_LT, .value = value};
+                return create_token(type::TK_LT);
             }
             case '>': {
                 if (peek() == '=') {
                     m_x++;
                     advance();
-                    return token{.location{m_x, m_y}, .type = type::TK_GTE, .value = stringify()};
+                    return create_token(type::TK_GTE);
                 }
-                return token{.location{m_x, m_y}, .type = type::TK_GT, .value = value};
+                return create_token(type::TK_GT);
             }
         };
         return lex_rest(c);
