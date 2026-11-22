@@ -1,10 +1,12 @@
 #include <fstream>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 
 #include "src/cfg/dev.hpp"
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
+#include "src/monac/lex/lexer.hpp"
 #include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
 #include "src/utils/directory_manager.hpp"
@@ -58,42 +60,39 @@ int main(int argc, char** argv) {
             std::cout << i << std::endl;
         }
 #endif
-        if (cli.is_set_or(args::CLI_FLAGS::FLAG_PREP, args::CLI_FLAGS::FLAG_NORM)) {
-            if (cli.is_set(args::CLI_FLAGS::FLAG_NORM))
-                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
-                    const std::string normalized = monac::prep::normalizer{ss}.process();
-                    std::string contents = std::format("Normalized {} with contents:\n\n{}", path.c_str(), normalized);
-                    if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
-                        {
-                            const std::string io_error = std::format("Error opening file for I/O: {}", cli_info.output.c_str());
-                            std::ofstream ofs{cli_info.output};
-                            if (!ofs.is_open()) return (glob::log(glob::log_info::LOG_TYPE::FATAL, io_error, std::cerr), EXIT_FAILURE);
-                            ofs << contents;
-                        };
-                    } else
-                        glob::log(glob::log_info::LOG_TYPE::INFO, contents, std::clog);
-                    return EXIT_SUCCESS;
-                });
-            if (cli.is_set(args::CLI_FLAGS::FLAG_PREP)) {
-                MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
-                    monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
+        if (cli.is_set_or(args::CLI_FLAGS::FLAG_PREP, args::CLI_FLAGS::FLAG_NORM, args::CLI_FLAGS::FLAG_LEX)) {
+            return mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
+                const std::string io_error = std::format("Error opening file for I/O: {}\n", cli_info.output.c_str());
+
+                std::stringstream out_stream;
+
+                const std::string normalized = monac::prep::normalizer{ss}.process();
+                if (cli.is_set(args::CLI_FLAGS::FLAG_NORM)) {
+                    const std::string normalized_contents = std::format("Normalized {} with contents:\n{}\n\n", path.c_str(), normalized);
+                    out_stream << normalized_contents;
+                }
+                if (cli.is_set(args::CLI_FLAGS::FLAG_PREP)) {
+                    monac::prep::preprocessor prep{normalized};
                     auto prep_info = prep.process();
                     std::stringstream to_normalize{prep_info.expanded};
-                    const std::string normalized_expansion = monac::prep::normalizer{to_normalize}.process();
-                    const std::string contents = std::format("Preprocess {} with contents:\n\n{}", path.c_str(), normalized_expansion);
-                    if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
-                        {
-                            const std::string io_error = std::format("Error opening file for I/O: {}", cli_info.output.c_str());
-                            std::ofstream ofs{cli_info.output};
-                            if (!ofs.is_open()) return (glob::log(glob::log_info::LOG_TYPE::FATAL, io_error, std::cerr), EXIT_FAILURE);
-                            ofs << contents;
-                        };
-                    } else
-                        glob::log(glob::log_info::LOG_TYPE::INFO, contents, std::clog);
-                    return EXIT_SUCCESS;
-                });
-            }
+                    out_stream << std::format("Preprocess {} with contents:\n{}\n\n", path.c_str(), monac::prep::normalizer{to_normalize}.process());
+                    if (cli.is_set(args::CLI_FLAGS::FLAG_LEX)) {
+                        monac::semantic::lexer lexer{prep_info.expanded};
+                        const auto tokens = lexer.lex();
+                        out_stream << std::format("Lexer {} with contents:\n", path.c_str());
+                        for (const auto& token : tokens) out_stream << token << '\n';
+                    }
+                }
 
+                if (cli.is_set(args::CLI_FLAGS::FLAG_OUTPUT)) {
+                    std::ofstream ofs{cli_info.output};
+                    if (!ofs.is_open()) return (glob::log(glob::log_info::LOG_TYPE::FATAL, io_error, std::cerr), EXIT_FAILURE);
+                    ofs << out_stream.rdbuf();
+                } else
+                    glob::log(glob::log_info::LOG_TYPE::INFO, out_stream.str(), std::clog);
+
+                return EXIT_SUCCESS;
+            });
         } else {
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //                                                                                                                                        ||
@@ -117,20 +116,18 @@ int main(int argc, char** argv) {
             //   9) optimization passes                                                                                                               ||
             //   8) link                                                                                                                              ||
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            MONAC__PROCESS__COMBINATION__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
+            return mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Beginning Compilation of Translation Unit {}", path.c_str()), std::clog);
                 monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
                 const auto prep_info = prep.process();
-                
+                monac::semantic::lexer lexer{prep_info.expanded};
+                glob::report();
+                return EXIT_SUCCESS;
             });
         }
-
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
-        return MONAC__PROCESS__COMBINATION__STATUS;
+        return EXIT_FAILURE;
     }
-
-    glob::report();
-    return MONAC__PROCESS__COMBINATION__STATUS;
 };

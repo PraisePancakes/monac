@@ -123,14 +123,21 @@ class preprocessor {
     prep_info process() {
         std::stringstream stream{m_normalized};
         while (!mona::_eof()(stream)) {
-            if (mona::_match("//")(stream))
+            if (mona::_match("//")(stream)) {
                 while (!mona::_eof()(stream) && !utils::unit::new_line(stream)) stream.get();
-            if (mona::_match("/*")(stream))
-                while (!mona::_eof()(stream) && !mona::_match("*/")(stream)) stream.get();
+                _m_info.expanded += '\n';
+            }
+            if (mona::_match("/*")(stream)) {
+                while (!mona::_eof()(stream) && !mona::_match("*/")(stream)) {
+                    if (mona::_check(utils::unit::new_line)(stream)) _m_info.expanded += '\n';
+                    stream.get();
+                }
+            }
 
             auto control = parsers::control_line(stream);
             if (control) {
                 _visit_control(control.value());
+                _m_info.expanded += '\n';
                 continue;
             }
             auto ident = utils::unit::identifier(stream);

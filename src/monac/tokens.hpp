@@ -21,6 +21,7 @@ namespace monac::semantic {
     TOKEN(TK_DOLLA, '$')          \
     TOKEN(TK_LT, '<')             \
     TOKEN(TK_GT, '>')             \
+    TOKEN(TK_BANG, '!')           \
     TOKEN(TK_LTE, 0x80)           \
     TOKEN(TK_GTE, 0x81)           \
     TOKEN(TK_EQUALITY, 0x82)      \
@@ -29,15 +30,29 @@ namespace monac::semantic {
     TOKEN(TK_RESERVED, 0x85)      \
     TOKEN(TK_RESERVED_TYPE, 0x86) \
     TOKEN(TK_STRING_LIT, 0x87)    \
+    TOKEN(TK_DEC, 0x88)           \
+    TOKEN(TK_INC, 0x89)           \
+    TOKEN(TK_PLUS_EQ, 0x8A)       \
+    TOKEN(TK_MINUS_EQ, 0x8B)      \
+    TOKEN(TK_STAR_EQ, 0x8C)       \
+    TOKEN(TK_BANG_EQ, 0x8D)       \
     TOKEN(TK_UNKNOWN, 0xFF)
 
 struct token {
+   private:
+    struct location_t final {
+        unsigned int x;
+        unsigned int y;
+    };
+
+   public:
+    location_t location;
     enum class TOKEN_TYPE : std::uint8_t {
 #define TOKEN(ENUM, VALUE) ENUM = VALUE,
         TOKEN_TABLE
 #undef TOKEN
     } type;
-    std::pair<unsigned int, unsigned int> location;
+
     std::string value;
 
     static std::string type_to_string(const TOKEN_TYPE token) {
@@ -49,6 +64,11 @@ struct token {
             TOKEN_TABLE
 #undef TOKEN
         };
+    };
+
+    friend std::ostream& operator<<(std::ostream& os, const token& t) {
+        os << std::format("[{}] : {} at line {}:{}", token::type_to_string(t.type), t.value, t.location.y, t.location.x);
+        return os;
     };
 };
 

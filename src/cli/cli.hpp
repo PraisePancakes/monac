@@ -28,7 +28,8 @@ class cli_except final : public std::exception {
     X(FLAG_VERSION, "version", 'v', 1 << 1) \
     X(FLAG_OUTPUT, "output", 'o', 1 << 2)   \
     X(FLAG_NORM, "norm", 'N', 1 << 5)       \
-    X(FLAG_PREP, "prep", 'P', 1 << 6)
+    X(FLAG_PREP, "prep", 'P', 1 << 6)       \
+    X(FLAG_LEX, "lex", 'l', 1 << 7)
 
 class args final {
     using flag_t = std::uint32_t;
@@ -125,6 +126,10 @@ class args final {
 
     void parse_FLAG_PREP() {
         set_flag(CLI_FLAGS::FLAG_PREP);
+    }
+
+    void parse_FLAG_LEX() {
+        set_flag(CLI_FLAGS::FLAG_LEX);
     }
 
     void parse_command() {
