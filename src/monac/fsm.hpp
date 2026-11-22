@@ -47,19 +47,19 @@ class worm_machine {
         return m_span[m_end + 1];
     }
 
-    iterator begin() {
+    [[nodiscard]] iterator begin() noexcept {
         return m_span.begin() + m_start;
     };
 
-    iterator end() {
+    [[nodiscard]] iterator end() noexcept {
         return m_span.begin() + m_end;
     };
 
-    const_iterator begin() const {
+    [[nodiscard]] const_iterator begin() const noexcept {
         return this->begin();
     };
 
-    const_iterator end() const {
+    [[nodiscard]] const_iterator end() const noexcept {
         return this->end();
     };
 
@@ -70,6 +70,7 @@ class worm_machine {
     void finish_unit() noexcept {
         this->m_start = m_end;
     };
+
     virtual ~worm_machine() = default;
 };
 
