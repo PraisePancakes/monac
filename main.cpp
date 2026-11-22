@@ -48,7 +48,6 @@ int main(int argc, char** argv) {
         args << argv[i] << ' ';
     }
 
-    bool MONAC__PROCESS__COMBINATION__STATUS = {EXIT_SUCCESS};
     try {
         cli::args cli{std::move(args)};
         cli.parse();

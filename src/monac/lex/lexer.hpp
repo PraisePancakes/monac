@@ -20,33 +20,33 @@ class lexer final : protected worm_machine<std::string> {
         return token{.location{m_x, m_y}, .type = t, .value = stringify()};
     }
 
+    token lex_partial_number() {
+        while (std::isdigit(peek())) {
+            m_x++;
+            advance();
+        }
+        return create_token(type::TK_NUMBER);
+    };
+
+    token lex_number() {
+        while (std::isdigit(peek())) {
+            m_x++;
+            advance();
+        }
+        if (peek() == '.') {
+            m_x++;
+            advance();
+        }
+        while (std::isdigit(peek())) {
+            m_x++;
+            advance();
+        }
+        return create_token(type::TK_NUMBER);
+    }
+
     token lex_rest(const char c) {
-        if (peek_prev() == '.' && std::isdigit(c)) {
-            while (std::isdigit(peek())) {
-                m_x++;
-                advance();
-            }
-            return create_token(type::TK_NUMBER);
-        } else if (std::isdigit(c)) {
-            while (std::isdigit(peek())) {
-                m_x++;
-                advance();
-            }
-            if (peek() == '.') {
-                m_x++;
-                advance();
-            }
-            while (std::isdigit(peek())) {
-                m_x++;
-                advance();
-            }
-            return create_token(type::TK_NUMBER);
-        } else if (c == '.') {
-            while (std::isdigit(peek())) {
-                m_x++;
-                advance();
-            }
-            return create_token(type::TK_NUMBER);
+        if (std::isdigit(c)) {
+            return lex_number();
         } else if (std::isalpha(c)) {
             while (std::isalnum(peek())) {
                 m_x++;
@@ -64,7 +64,7 @@ class lexer final : protected worm_machine<std::string> {
             case ':':
                 return create_token(type::TK_COLON);
             case '.': {
-                if (std::isdigit(peek())) return lex_rest(c);
+                if (std::isdigit(peek())) return lex_partial_number();
                 return create_token(type::TK_DOT);
             }
             case '$':
@@ -125,7 +125,12 @@ class lexer final : protected worm_machine<std::string> {
                     advance();
                     return create_token(type::TK_MINUS_EQ);
                 }
-                if (std::isdigit(peek())) return lex_rest(c);
+                if (std::isdigit(peek())) return lex_number();
+                if (peek() == '.') {
+                    advance();
+                    m_x++;
+                    return lex_partial_number();
+                }
 
                 return create_token(type::TK_MINUS);
             }
