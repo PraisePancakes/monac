@@ -6,6 +6,7 @@
 
 #include "../cfg/version.hpp"
 #include "../globals/logger.hpp"
+#include "../utils/directory_manager.hpp"
 #include "../utils/unit_parsers.hpp"
 #include "parsers.hpp"
 
@@ -161,16 +162,19 @@ class args final {
         } else {
             // parse path
             _for_each_validate_then_process([&](std::filesystem::path check_path) {
-                 if (!std::filesystem::exists(check_path) || !check_path.has_extension()) {
+                 if (!std::filesystem::exists(check_path)) {
                 glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("Undefined input path: {}", check_path.string()), std::cerr);
-                throw cli_except("Cli couldn't find input files");
-            }
-            if (check_path.extension() != ".mx") {
-                glob::log(glob::log_info::LOG_TYPE::FATAL,  std::format("Undefined extension: input file {} requires an .mx extension", check_path.string()), std::cerr);
                 throw cli_except("Cli couldn't find input files");
             } },
                                             [&](std::filesystem::path process_path) {
-                                                m_info.all_paths.push_back(process_path);
+                                                utils::fs::directory_manager dm{process_path};
+                                                auto files = dm.resolve_directory();
+                                                for (const auto& f : files)
+                                                    if (f.extension() == ".mx" || f.extension() == ".mm")
+                                                        m_info.all_paths.push_back(f);
+                                                    else {
+                                                        glob::log(glob::log_info::LOG_TYPE::WARNING, std::format("File format not recognized, skipping: {}", f.string()), std::cerr);
+                                                    }
                                             });
         }
 

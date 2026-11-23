@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
             //   9) optimization passes                                                                                                               ||
             //   8) link                                                                                                                              ||
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            return mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
+            bool MONAC__COMPILATION__PHASE__STATUS = mx_atomic_process(cli_info.all_paths, [&](std::stringstream& ss, const std::filesystem::path path) {
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Beginning Compilation of Translation Unit {}", path.c_str()), std::clog);
                 monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
@@ -122,12 +122,14 @@ int main(int argc, char** argv) {
                 monac::semantic::lexer lexer{prep_info.expanded};
                 const auto token_span = lexer.lex();
                 monac::semantic::parser parser{token_span};
-                glob::report();
-                return EXIT_SUCCESS;
             });
+
+            glob::report();
+            return MONAC__COMPILATION__PHASE__STATUS;
         }
     } catch (cli::cli_except& e) {
         std::cerr << e.get_reason() << std::endl;
+        glob::report();
         return EXIT_FAILURE;
     }
 };
