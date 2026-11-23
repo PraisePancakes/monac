@@ -4,11 +4,11 @@
 #include <span>
 #include <type_traits>
 namespace monac::semantic {
-template <std::ranges::random_access_range T>
+template <std::ranges::random_access_range T_>
 class worm_machine {
-    using value_type = T::value_type;
-    using size_type = T::size_type;
-    using const_pointer = T::const_pointer;
+    using value_type = T_::value_type;
+    using size_type = T_::size_type;
+    using const_pointer = T_::const_pointer;
     using storage_view = std::span<const value_type>;
     using iterator = storage_view::iterator;
 
@@ -18,7 +18,7 @@ class worm_machine {
 
    public:
     worm_machine() = delete;
-    worm_machine(const T& sequence_to_view) : _m_span{sequence_to_view} {};
+    worm_machine(const T_& sequence_to_view) : _m_span{sequence_to_view} {};
     worm_machine(const worm_machine&) = default;
     worm_machine(worm_machine&&) = default;
     worm_machine& operator=(const worm_machine&) = default;

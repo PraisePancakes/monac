@@ -2,7 +2,7 @@
 #define SINGLETON_HPP
 namespace glob {
 
-template <typename T>
+template <typename T_>
 class singleton {
     singleton(const singleton&) = delete;
     singleton(singleton&&) = delete;
@@ -14,8 +14,8 @@ class singleton {
     virtual ~singleton() {};
 
    public:
-    static T& instance() {
-        static T inst;
+    static T_& instance() {
+        static T_ inst;
         return inst;
     };
 };

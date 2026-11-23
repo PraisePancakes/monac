@@ -4,7 +4,7 @@
 #include "macro.hpp"
 
 #define MONAC_VERSION_MAJOR 0
-#define MONAC_VERSION_MINOR 0
+#define MONAC_VERSION_MINOR 12
 #define MONAC_VERSION_PATCH 0
 
 #define MONAC_VERSION               \

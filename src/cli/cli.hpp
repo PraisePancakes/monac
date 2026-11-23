@@ -75,8 +75,8 @@ class args final {
         return false;
     };
 
-    template <typename ErrorCheckCallback, typename ProcessCallback>
-    void _for_each_validate_then_process(ErrorCheckCallback&& check_err, ProcessCallback&& process) {
+    template <typename ErrorCheckCallback_, typename ProcessCallback_>
+    void _for_each_validate_then_process(ErrorCheckCallback_&& check_err, ProcessCallback_&& process) {
         while (!mona::_eof()(_m_arguments)) {
             unit::opt_white_space(_m_arguments);
             auto sng_should_finish = mona::_check(parsers::single_flag)(_m_arguments);
@@ -192,15 +192,15 @@ class args final {
         }
     };
 
-    template <typename... Flags>
-        requires(std::is_same_v<Flags, CLI_FLAGS> && ...)
-    bool is_set_and(Flags... flags) {
+    template <typename... Flags_>
+        requires(std::is_same_v<Flags_, CLI_FLAGS> && ...)
+    bool is_set_and(Flags_... flags) {
         return (is_set(flags) && ...);
     }
 
-    template <typename... Flags>
-        requires(std::is_same_v<Flags, CLI_FLAGS> && ...)
-    bool is_set_or(Flags... flags) {
+    template <typename... Flags_>
+        requires(std::is_same_v<Flags_, CLI_FLAGS> && ...)
+    bool is_set_or(Flags_... flags) {
         return (is_set(flags) || ...);
     }
 
@@ -229,7 +229,10 @@ class args final {
             glob::log(glob::log_info::LOG_TYPE::INFO, MONAC_VERSION, std::cout);
             throw cli_except("version exception");
         }
-
+        if (m_info.all_paths.empty()) {
+            glob::log(glob::log_info::LOG_TYPE::FATAL, "no input files\ncompilation halted.", std::cout);
+            throw cli_except("Cli couldn't parse any input files, see `monac --help` for more details.");
+        }
         return m_info;
     };
 };

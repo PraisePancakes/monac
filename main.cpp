@@ -13,8 +13,8 @@
 #include "src/monac/printer/formats.hpp"
 #include "src/utils/directory_manager.hpp"
 using namespace cli;
-template <typename ProcessCallback>
-bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, ProcessCallback&& callback) {
+template <typename ProcessCallback_>
+bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, ProcessCallback_&& callback) {
     for (const auto& path : to_process) {
         utils::fs::directory_manager dm{path};
         auto files = dm.resolve_directory();
