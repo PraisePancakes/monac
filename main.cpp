@@ -69,10 +69,9 @@ int main(int argc, char** argv) {
 
                 const std::string normalized = monac::prep::normalizer{ss}.process();
                 if (cli.is_set(args::CLI_FLAGS::FLAG_NORM)) {
-                    const std::string normalized_contents = std::format("Normalized {} with contents:\n{}\n\n", path.c_str(), normalized);
-                    out_stream << normalized_contents;
+                    out_stream << std::format("Normalized {} with contents:\n{}\n\n", path.c_str(), normalized);
                 }
-                if (cli.is_set(args::CLI_FLAGS::FLAG_PREP)) {
+                if (cli.is_set_or(args::CLI_FLAGS::FLAG_PREP, args::CLI_FLAGS::FLAG_LEX)) {
                     monac::prep::preprocessor prep{normalized};
                     auto prep_info = prep.process();
                     out_stream << std::format("Preprocess {} with contents:\n{}\n\n", path.c_str(), prep_info);
