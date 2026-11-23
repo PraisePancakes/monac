@@ -6,12 +6,12 @@
 namespace utils::fs {
 
 class directory_manager final {
-    std::filesystem::path m_path;
+    std::filesystem::path _m_path;
 
    public:
     directory_manager() = default;
     directory_manager(const std::filesystem::path& p)
-        : m_path{p} {};
+        : _m_path{p} {};
     directory_manager(const directory_manager&) = default;
     directory_manager(directory_manager&&) = default;
     directory_manager& operator=(const directory_manager&) = default;
@@ -20,8 +20,8 @@ class directory_manager final {
 
     std::vector<std::filesystem::path> resolve_directory() {
         std::vector<std::filesystem::path> files;
-        if (std::filesystem::is_directory(m_path)) {
-            for (auto it = std::filesystem::recursive_directory_iterator{m_path};
+        if (std::filesystem::is_directory(_m_path)) {
+            for (auto it = std::filesystem::recursive_directory_iterator{_m_path};
                  it != std::filesystem::recursive_directory_iterator(); it++) {
                 auto current_path = *it;
                 if (std::filesystem::is_regular_file(current_path)) {
@@ -29,7 +29,7 @@ class directory_manager final {
                 };
             }
         } else {
-            files.push_back(m_path);
+            files.push_back(_m_path);
         }
         return files;
     };
