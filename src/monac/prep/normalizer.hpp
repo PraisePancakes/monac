@@ -34,6 +34,7 @@ class normalizer {
         return ret;
     };
 };
+
 }  // namespace monac::prep
 
 #endif

@@ -1,5 +1,6 @@
 #ifndef PREP_HPP
 #define PREP_HPP
+#include <format>
 #include <iostream>
 #include <istream>
 #include <mona/mona.hpp>
@@ -153,6 +154,31 @@ class preprocessor {
         return _m_info;
     };
 };
-};  // namespace monac::prep
 
+};  // namespace monac::prep
+template <>
+struct std::formatter<decltype(std::declval<monac::prep::preprocessor>().process())> {
+    constexpr auto parse(std::format_parse_context& ctx) { return ctx.begin(); }
+    auto format(const decltype(std::declval<monac::prep::preprocessor>().process())& p, std::format_context& ctx) const {
+        std::string ret{""};
+        std::stringstream ss{p.expanded};
+        while (!mona::_eof()(ss)) {
+            auto skippable_parses = mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"));
+            if (skippable_parses(ss)) {
+                while (skippable_parses(ss)) {
+                };
+                ret += ' ';
+                continue;
+            }
+            if (utils::unit::new_line(ss)) {
+                while (utils::unit::new_line(ss)) {
+                };
+                ret += '\n';
+                continue;
+            }
+            ret += ss.get();
+        };
+        return std::format_to(ctx.out(), "{}", ret);
+    }
+};
 #endif

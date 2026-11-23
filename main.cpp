@@ -7,6 +7,7 @@
 #include "src/cli/cli.hpp"
 #include "src/globals/logger.hpp"
 #include "src/monac/lex/lexer.hpp"
+#include "src/monac/parse/parser.hpp"
 #include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
 #include "src/utils/directory_manager.hpp"
@@ -73,8 +74,7 @@ int main(int argc, char** argv) {
                 if (cli.is_set(args::CLI_FLAGS::FLAG_PREP)) {
                     monac::prep::preprocessor prep{normalized};
                     auto prep_info = prep.process();
-                    std::stringstream to_normalize{prep_info.expanded};
-                    out_stream << std::format("Preprocess {} with contents:\n{}\n\n", path.c_str(), monac::prep::normalizer{to_normalize}.process());
+                    out_stream << std::format("Preprocess {} with contents:\n{}\n\n", path.c_str(), prep_info);
                     if (cli.is_set(args::CLI_FLAGS::FLAG_LEX)) {
                         monac::semantic::lexer lexer{prep_info.expanded};
                         const auto tokens = lexer.lex();
@@ -121,6 +121,8 @@ int main(int argc, char** argv) {
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
                 const auto prep_info = prep.process();
                 monac::semantic::lexer lexer{prep_info.expanded};
+                const auto token_span = lexer.lex();
+                monac::semantic::parser parser{token_span};
                 glob::report();
                 return EXIT_SUCCESS;
             });

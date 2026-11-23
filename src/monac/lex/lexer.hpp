@@ -6,7 +6,7 @@
 #include "../tokens.hpp"
 namespace monac::semantic {
 using type = token::TOKEN_TYPE;
-class lexer final : protected worm_machine<std::string> {
+class lexer final : public worm_machine<std::string_view> {
     unsigned int m_x{0};  // pos
     unsigned int m_y{1};  // line
     std::vector<token> m_tokens;
