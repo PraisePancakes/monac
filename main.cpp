@@ -10,6 +10,7 @@
 #include "src/monac/parse/parser.hpp"
 #include "src/monac/prep/normalizer.hpp"
 #include "src/monac/prep/prep.hpp"
+#include "src/monac/printer/formats.hpp"
 #include "src/utils/directory_manager.hpp"
 using namespace cli;
 template <typename ProcessCallback>
@@ -78,8 +79,7 @@ int main(int argc, char** argv) {
                     if (cli.is_set(args::CLI_FLAGS::FLAG_LEX)) {
                         monac::semantic::lexer lexer{prep_info.expanded};
                         const auto tokens = lexer.lex();
-                        out_stream << std::format("Lexer {} with contents:\n", path.c_str());
-                        for (const auto& token : tokens) out_stream << token << '\n';
+                        out_stream << std::format("Lexer {} with contents:\n{}\n", path.c_str(), tokens);
                     }
                 }
 
