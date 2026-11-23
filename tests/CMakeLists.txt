@@ -14,6 +14,7 @@ directory.cpp
 prep/normalizer.cpp
 unit_parsers.cpp
 prep/prep_parsers.cpp
+arena.cpp
 cli.cpp
 )
 

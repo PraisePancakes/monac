@@ -6,7 +6,7 @@
 namespace monac::semantic {
 
 class parser final : public worm_machine<std::span<token>> {
-    monac::memory::arena<> _m_arena;
+    monac::memory::arena_list _m_arenas;
 
    public:
     parser(const std::span<token>& tokens) : worm_machine(tokens) {};
