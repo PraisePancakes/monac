@@ -172,9 +172,8 @@ class args final {
                                                 for (const auto& f : files)
                                                     if (f.extension() == ".mx" || f.extension() == ".mm")
                                                         m_info.all_paths.push_back(f);
-                                                    else {
+                                                    else
                                                         glob::log(glob::log_info::LOG_TYPE::WARNING, std::format("File format not recognized, skipping: {}", f.string()), std::cerr);
-                                                    }
                                             });
         }
 
