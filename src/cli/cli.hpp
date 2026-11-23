@@ -12,13 +12,13 @@
 namespace cli {
 using namespace utils;
 class cli_except final : public std::exception {
-    std::string m_what;
+    std::string _m_what;
 
    public:
-    cli_except() : m_what{""} {};
-    cli_except(const std::string& what) : m_what(what) {};
+    cli_except() : _m_what{""} {};
+    cli_except(const std::string& what) : _m_what(what) {};
     std::string get_reason() const {
-        return "[MONAC-CLI-EXCEPT]: " + m_what;
+        return "[MONAC-CLI-EXCEPT]: " + _m_what;
     };
     ~cli_except() = default;
 };
@@ -33,8 +33,8 @@ class cli_except final : public std::exception {
 
 class args final {
     using flag_t = std::uint32_t;
-    std::stringstream m_arguments;
-    std::string m_usage;
+    std::stringstream _m_arguments;
+    std::string _m_usage;
 
    public:
     enum class CLI_FLAGS : flag_t {
@@ -43,14 +43,14 @@ class args final {
 #undef X
     };
    private:
-    flag_t m_flags{0};
+    flag_t _m_flags{0};
 
     struct cli_info {
         std::vector<std::filesystem::path> all_paths;
         std::filesystem::path output;
     } m_info;
     void set_flag(CLI_FLAGS flag) {
-        m_flags |= static_cast<flag_t>(flag);
+        _m_flags |= static_cast<flag_t>(flag);
     };
 
     bool any_set() const {
@@ -77,12 +77,12 @@ class args final {
 
     template <typename ErrorCheckCallback, typename ProcessCallback>
     void _for_each_validate_then_process(ErrorCheckCallback&& check_err, ProcessCallback&& process) {
-        while (!mona::_eof()(m_arguments)) {
-            unit::opt_white_space(m_arguments);
-            auto sng_should_finish = mona::_check(parsers::single_flag)(m_arguments);
-            auto dub_should_finish = mona::_check(parsers::double_flag)(m_arguments);
+        while (!mona::_eof()(_m_arguments)) {
+            unit::opt_white_space(_m_arguments);
+            auto sng_should_finish = mona::_check(parsers::single_flag)(_m_arguments);
+            auto dub_should_finish = mona::_check(parsers::double_flag)(_m_arguments);
             if (sng_should_finish.has_value() || dub_should_finish.has_value()) break;
-            auto file = parsers::directory(m_arguments);
+            auto file = parsers::directory(_m_arguments);
             if (!file.has_value()) {
                 glob::log(glob::log_info::LOG_TYPE::FATAL, std::format("File Parser error: {}", file.error()), std::cerr);
                 throw cli_except("Cli couldn't find input files");
@@ -90,20 +90,20 @@ class args final {
             std::filesystem::path fp{file.value()};
             check_err(fp);
             process(fp);
-            unit::opt_white_space(m_arguments);
+            unit::opt_white_space(_m_arguments);
         }
     };
 
     void parse_FLAG_OUTPUT() {
         set_flag(CLI_FLAGS::FLAG_OUTPUT);
-        unit::opt_white_space(m_arguments);
-        auto sng_should_finish = mona::_check(parsers::single_flag)(m_arguments);
-        auto dub_should_finish = mona::_check(parsers::double_flag)(m_arguments);
+        unit::opt_white_space(_m_arguments);
+        auto sng_should_finish = mona::_check(parsers::single_flag)(_m_arguments);
+        auto dub_should_finish = mona::_check(parsers::double_flag)(_m_arguments);
         if (sng_should_finish.has_value() || dub_should_finish.has_value()) {
             glob::log(glob::log_info::LOG_TYPE::FATAL, "Missing output files", std::cerr);
             throw cli_except("Cli couldn't parse output files");
         };
-        auto op = mona::_symbols_ex(' ')(m_arguments);
+        auto op = mona::_symbols_ex(' ')(_m_arguments);
         if (!op.has_value()) {
             glob::log(glob::log_info::LOG_TYPE::FATAL, "Unknown Symbol", std::cerr);
             throw cli_except("Cli couldn't parse output files");
@@ -134,10 +134,10 @@ class args final {
 
     void parse_command() {
         // don't touch this. X-macro automates this portion, all you need is to define the parse functions in the form of parse_FLAG_<FLAG>
-        unit::opt_white_space(m_arguments);
+        unit::opt_white_space(_m_arguments);
         // must parse some options
-        auto sng = parsers::single_flag(m_arguments);
-        auto dub = parsers::double_flag(m_arguments);
+        auto sng = parsers::single_flag(_m_arguments);
+        auto dub = parsers::double_flag(_m_arguments);
         if (dub.has_value()) {
             auto flag = dub.value();
             if (!valid_flag(flag)) {
@@ -174,17 +174,17 @@ class args final {
                                             });
         }
 
-        unit::opt_white_space(m_arguments);
+        unit::opt_white_space(_m_arguments);
     };
 
    public:
     args(std::stringstream&& ss)
-        : m_arguments{std::move(ss)} {
+        : _m_arguments{std::move(ss)} {
         std::ifstream ifs(USAGE_FILE_PATH);
         if (ifs.is_open()) {
             std::stringstream buf;
             buf << ifs.rdbuf();
-            m_usage = buf.str();
+            _m_usage = buf.str();
             ifs.close();
         } else {
             glob::log(glob::log_info::LOG_TYPE::FATAL, "Missing usage data", std::cerr);
@@ -205,23 +205,23 @@ class args final {
     }
 
     bool is_set(CLI_FLAGS flag) const {
-        return (m_flags & static_cast<flag_t>(flag));
+        return (_m_flags & static_cast<flag_t>(flag));
     }
 
     void parse() {
-        auto entry_parser = mona::_match("monac", "missing entry")(m_arguments);
+        auto entry_parser = mona::_match("monac", "missing entry")(_m_arguments);
         if (!entry_parser.has_value()) {
             glob::log(glob::log_info::LOG_TYPE::FATAL, "Missing monac entry", std::cerr);
             throw cli_except("Cli couldn't find monac entry");
         };
-        unit::opt_white_space(m_arguments);
-        while (!mona::_eof()(m_arguments))
+        unit::opt_white_space(_m_arguments);
+        while (!mona::_eof()(_m_arguments))
             parse_command();
     };
 
     cli_info execute() const {
         if (is_set(CLI_FLAGS::FLAG_HELP)) {
-            glob::log(glob::log_info::LOG_TYPE::INFO, m_usage, std::cout);
+            glob::log(glob::log_info::LOG_TYPE::INFO, _m_usage, std::cout);
             throw cli_except("help exception");
         }
 

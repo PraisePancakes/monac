@@ -16,7 +16,7 @@ using namespace utils;
 // **NOTE**: must take in a normalized string of contents before expansion and parsing.
 
 class preprocessor {
-    std::string m_normalized;
+    std::string _m_normalized;
 
     struct prep_info {
         std::string expanded;
@@ -114,7 +114,7 @@ class preprocessor {
 
    public:
     preprocessor() = delete;
-    preprocessor(const std::string& normalized) : m_normalized{normalized} {};
+    preprocessor(const std::string& normalized) : _m_normalized{normalized} {};
     preprocessor(const preprocessor&) = default;
     preprocessor(preprocessor&&) = default;
     preprocessor& operator=(preprocessor&&) = delete;
@@ -122,7 +122,7 @@ class preprocessor {
     ~preprocessor() = default;
 
     prep_info process() {
-        std::stringstream stream{m_normalized};
+        std::stringstream stream{_m_normalized};
         while (!mona::_eof()(stream)) {
             if (mona::_match("//")(stream)) {
                 while (!mona::_eof()(stream) && !utils::unit::new_line(stream)) stream.get();

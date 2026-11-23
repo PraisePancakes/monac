@@ -39,31 +39,31 @@ struct log_data {
 };
 
 class logger final : public singleton<logger> {
-    log_data m_data;
+    log_data _m_data;
     void update_log_data(const log_info& i) {
         switch (i.type) {
 #define X(V)                    \
     case log_info::LOG_TYPE::V: \
-        m_data.V##S++;          \
+        _m_data.V##S++;         \
         break;
             LIST_OF_LOG_TYPES
 #undef X
         };
     };
-    std::ostream* m_nonown_stream;
+    std::ostream* _m_nonown_stream;
 
    public:
     void log(const log_info& info, std::ostream& os) {
-        if (!m_nonown_stream) m_nonown_stream = &os;
+        if (!_m_nonown_stream) _m_nonown_stream = &os;
         update_log_data(info);
         os << "[MONAC-" << info.type_to_string(info.type) << "] " << info.what << std::endl;
     };
 
     void report() {
-        if (m_nonown_stream) {
-            (*m_nonown_stream) << "Generated: \n";
+        if (_m_nonown_stream) {
+            (*_m_nonown_stream) << "Generated: \n";
 #define X(V) \
-    (*m_nonown_stream) << #V << "S " << m_data.V##S << "\n";
+    (*_m_nonown_stream) << #V << "S " << _m_data.V##S << "\n";
             LIST_OF_LOG_TYPES
 #undef X
         }

@@ -12,48 +12,48 @@ class worm_machine {
     using storage_view = std::span<const value_type>;
     using iterator = storage_view::iterator;
 
-    storage_view m_span;
-    size_type m_start{0};
-    size_type m_end{0};
+    storage_view _m_span;
+    size_type _m_start{0};
+    size_type _m_end{0};
 
    public:
     worm_machine() = delete;
-    worm_machine(const T& sequence_to_view) : m_span{sequence_to_view} {};
+    worm_machine(const T& sequence_to_view) : _m_span{sequence_to_view} {};
     worm_machine(const worm_machine&) = default;
     worm_machine(worm_machine&&) = default;
     worm_machine& operator=(const worm_machine&) = default;
     worm_machine& operator=(worm_machine&&) = default;
-    
+
     [[nodiscard]] bool is_end() const noexcept {
-        return m_end >= m_span.size();
+        return _m_end >= _m_span.size();
     };
 
     [[nodiscard]] value_type peek() const noexcept {
-        return m_span[m_end];
+        return _m_span[_m_end];
     };
 
     [[nodiscard]] value_type peek_prev() const noexcept {
-        return m_span[m_end - 1];
+        return _m_span[_m_end - 1];
     }
 
     [[nodiscard]] value_type peek_next() const noexcept {
-        return m_span[m_end + 1];
+        return _m_span[_m_end + 1];
     }
 
     [[nodiscard]] iterator begin() noexcept {
-        return m_span.begin() + m_start;
+        return _m_span.begin() + _m_start;
     };
 
     [[nodiscard]] iterator end() noexcept {
-        return m_span.begin() + m_end;
+        return _m_span.begin() + _m_end;
     };
 
     value_type advance() noexcept {
-        return m_span[m_end++];
+        return _m_span[_m_end++];
     };
 
     void finish_unit() noexcept {
-        this->m_start = m_end;
+        this->_m_start = _m_end;
     };
 
     virtual ~worm_machine() = default;

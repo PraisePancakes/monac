@@ -8,10 +8,10 @@
 namespace monac::prep {
 
 class normalizer {
-    std::istream& m_stream;
+    std::istream& _m_stream;
 
    public:
-    normalizer(std::istream& is) : m_stream{is} {};
+    normalizer(std::istream& is) : _m_stream{is} {};
     normalizer() = delete;
     normalizer(const normalizer&) = default;
     normalizer(normalizer&&) = default;
@@ -21,15 +21,15 @@ class normalizer {
 
     std::string process() {
         std::string ret{""};
-        while (!mona::_eof()(m_stream)) {
+        while (!mona::_eof()(_m_stream)) {
             auto skippable_parses = mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"));
-            if (skippable_parses(m_stream)) {
-                while (skippable_parses(m_stream)) {
+            if (skippable_parses(_m_stream)) {
+                while (skippable_parses(_m_stream)) {
                 };
                 ret += ' ';
                 continue;
             }
-            ret += m_stream.get();
+            ret += _m_stream.get();
         };
         return ret;
     };

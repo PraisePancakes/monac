@@ -7,12 +7,12 @@ template <typename Alloc = std::allocator<std::byte>>
 class arena {
     using alloc_traits = std::allocator_traits<Alloc>;
 
-    Alloc m_allocator;
-    std::byte* m_region{nullptr};
+    Alloc _m_allocator;
+    std::byte* _m_region{nullptr};
 
    public:
     arena() = default;
-    arena(const std::size_t size) : m_region{new std::byte[size]} {};
+    arena(const std::size_t size) : _m_region{new std::byte[size]} {};
 };
 
 };  // namespace monac::memory

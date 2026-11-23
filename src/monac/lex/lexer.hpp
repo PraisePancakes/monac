@@ -7,9 +7,9 @@
 namespace monac::semantic {
 using type = token::TOKEN_TYPE;
 class lexer final : public worm_machine<std::string_view> {
-    unsigned int m_x{0};  // pos
-    unsigned int m_y{1};  // line
-    std::vector<token> m_tokens;
+    unsigned int _m_x{0};  // pos
+    unsigned int _m_y{1};  // line
+    std::vector<token> _m_tokens;
     std::string stringify() {
         std::string ret{""};
         for (const auto c : *this) ret += c;
@@ -17,12 +17,12 @@ class lexer final : public worm_machine<std::string_view> {
     };
 
     token create_token(type t) {
-        return token{.location{m_x, m_y}, .type = t, .value = stringify()};
+        return token{.location{_m_x, _m_y}, .type = t, .value = stringify()};
     }
 
     token lex_partial_number() {
         while (std::isdigit(peek())) {
-            m_x++;
+            _m_x++;
             advance();
         }
         return create_token(type::TK_NUMBER);
@@ -30,15 +30,15 @@ class lexer final : public worm_machine<std::string_view> {
 
     token lex_number() {
         while (std::isdigit(peek())) {
-            m_x++;
+            _m_x++;
             advance();
         }
         if (peek() == '.') {
-            m_x++;
+            _m_x++;
             advance();
         }
         while (std::isdigit(peek())) {
-            m_x++;
+            _m_x++;
             advance();
         }
         return create_token(type::TK_NUMBER);
@@ -49,7 +49,7 @@ class lexer final : public worm_machine<std::string_view> {
             return lex_number();
         } else if (std::isalpha(c) || peek() == '_') {
             while (std::isalnum(peek()) || peek() == '_') {
-                m_x++;
+                _m_x++;
                 advance();
             }
             return create_token(type::TK_IDENTIFIER);
@@ -73,7 +73,7 @@ class lexer final : public worm_machine<std::string_view> {
                 return create_token(type::TK_SLASH);
             case '*': {
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_STAR_EQ);
                 }
@@ -95,7 +95,7 @@ class lexer final : public worm_machine<std::string_view> {
                 return create_token(type::TK_RCURL);
             case '=': {
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_EQUALITY);
                 };
@@ -103,12 +103,12 @@ class lexer final : public worm_machine<std::string_view> {
             };
             case '+': {
                 if (peek() == '+') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_INC);
                 };
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_PLUS_EQ);
                 }
@@ -116,19 +116,19 @@ class lexer final : public worm_machine<std::string_view> {
             }
             case '-': {
                 if (peek() == '-') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_DEC);
                 };
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_MINUS_EQ);
                 }
                 if (std::isdigit(peek())) return lex_number();
                 if (peek() == '.') {
                     advance();
-                    m_x++;
+                    _m_x++;
                     return lex_partial_number();
                 }
 
@@ -136,7 +136,7 @@ class lexer final : public worm_machine<std::string_view> {
             }
             case '!': {
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_BANG_EQ);
                 }
@@ -144,7 +144,7 @@ class lexer final : public worm_machine<std::string_view> {
             }
             case '<': {
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_LTE);
                 }
@@ -152,7 +152,7 @@ class lexer final : public worm_machine<std::string_view> {
             }
             case '>': {
                 if (peek() == '=') {
-                    m_x++;
+                    _m_x++;
                     advance();
                     return create_token(type::TK_GTE);
                 }
@@ -175,22 +175,22 @@ class lexer final : public worm_machine<std::string_view> {
             while (std::isspace(static_cast<unsigned char>(peek()))) {
                 const char c = advance();
                 if (c == '\n') {
-                    m_x = 0;
-                    m_y++;
+                    _m_x = 0;
+                    _m_y++;
                 } else if (c == '\r') {
                     if (peek() == '\n') advance();
-                    m_x = 0;
-                    m_y++;
+                    _m_x = 0;
+                    _m_y++;
                 } else
-                    m_x++;
+                    _m_x++;
                 this->finish_unit();
             }
             const char c = advance();
-            m_x++;
-            m_tokens.push_back(lex_token(c));
+            _m_x++;
+            _m_tokens.push_back(lex_token(c));
             this->finish_unit();
         };
-        return m_tokens;
+        return _m_tokens;
     };
 };
 };  // namespace monac::semantic
