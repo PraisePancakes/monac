@@ -8,6 +8,7 @@ namespace glob {
     X(FATAL)              \
     X(ERROR)              \
     X(WARNING)            \
+    X(EXCEPT)             \
     X(INFO)
 
 struct log_info {

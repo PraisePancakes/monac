@@ -13,6 +13,7 @@
 #include "src/monac/printer/formats.hpp"
 #include "src/utils/directory_manager.hpp"
 using namespace cli;
+#define X(a, b) a + b
 template <typename ProcessCallback_>
 bool mx_atomic_process(const std::vector<std::filesystem::path>& to_process, ProcessCallback_&& callback) {
     for (const auto& path : to_process) {
@@ -128,7 +129,11 @@ int main(int argc, char** argv) {
             return MONAC__COMPILATION__PHASE__STATUS;
         }
     } catch (cli::cli_except& e) {
-        std::cerr << e.get_reason() << std::endl;
+        glob::log(glob::log_info::LOG_TYPE::EXCEPT, e.what(), std::cerr);
+        glob::report();
+        return EXIT_FAILURE;
+    } catch (monac::semantic::lex_error& e) {
+        glob::log(glob::log_info::LOG_TYPE::EXCEPT, e.what(), std::cerr);
         glob::report();
         return EXIT_FAILURE;
     }

@@ -4,8 +4,25 @@
 
 #include "../fsm.hpp"
 #include "../tokens.hpp"
+
 namespace monac::semantic {
 using type = token::TOKEN_TYPE;
+
+class lex_error final : public std::exception {
+    std::string _m_what;
+
+   public:
+    lex_error() : _m_what{""} {};
+    lex_error(const lex_error&) = default;
+    lex_error(lex_error&&) = default;
+    lex_error& operator=(const lex_error&) = default;
+    lex_error& operator=(lex_error&&) = default;
+    ~lex_error() = default;
+    lex_error(const std::string& what, unsigned int x, unsigned int y) : _m_what{std::format("[MONAC-LEXER-EXCEPT]: {} at line {}:{}", what, y, x)} {};
+    [[nodiscard]] const char* what() const noexcept override {
+        return _m_what.c_str();
+    };
+};
 class lexer final : public worm_machine<std::string_view> {
     unsigned int _m_x{0};  // pos
     unsigned int _m_y{1};  // line
@@ -45,7 +62,11 @@ class lexer final : public worm_machine<std::string_view> {
     }
 
     token lex_string_lit() {
+        auto start_x = _m_x;
+        auto start_y = _m_y;
+
         while (peek() != '\"') {
+            if (is_end()) throw lex_error("non terminated string literal, expected \" to close string", start_x, start_y);
             _m_x++;
             advance();
         }

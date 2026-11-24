@@ -23,7 +23,7 @@ class preprocessor {
     } _m_info;
 
     std::unordered_map<std::string, parsers::macro_node_t> m_symbol_table;
-    void _visit_control(parsers::macro_node_t macro) {
+    void _visit_control(parsers::macro_node_t macro) noexcept {
         std::visit(utils::overload{
                        [this](const parsers::variable var) {
                            this->m_symbol_table[var.id] = var;
@@ -34,15 +34,15 @@ class preprocessor {
                    macro);
     };
 
-    bool _known_symbol(const std::string& id) const {
+    [[nodiscard]] bool _known_symbol(const std::string& id) const {
         return m_symbol_table.contains(id);
     };
 
     // @define ADD(a, b) a + b
     // @define FUNC(a, b) b + a
     // FUNC(  1  , ADD(2, 3)); -> 2 + 3 + 1
-    std::vector<std::string> _parse_arguments(std::istream& is) {
-        if (!mona::_match('(')(is)) throw std::runtime_error("missing opening paren '(' on macro invocation");  // handle this better (line/pos)
+    [[nodiscard]] std::vector<std::string> _parse_arguments(std::istream& is) const noexcept {
+        mona::_match('(')(is);
         std::vector<std::string> arguments;
         std::string current;
         unsigned int depth = 0;
@@ -67,7 +67,7 @@ class preprocessor {
         return arguments;
     }
 
-    void _expand_ident(const std::string& id, std::istream& is) {
+    void _expand_ident(const std::string& id, std::istream& is) noexcept {
         if (!_known_symbol(id)) return;
         std::visit(utils::overload{
                        [this, &is](const parsers::function func) {
@@ -121,7 +121,7 @@ class preprocessor {
     preprocessor& operator=(const preprocessor&) = delete;
     ~preprocessor() = default;
 
-    prep_info process() {
+    prep_info process() noexcept {
         std::stringstream stream{_m_normalized};
         while (!mona::_eof()(stream)) {
             if (mona::_match("//")(stream)) {

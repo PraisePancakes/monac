@@ -41,20 +41,18 @@ namespace monac::semantic {
 struct token {
    private:
     struct location_t final {
-        unsigned int x;
-        unsigned int y;
+        unsigned int x{0};
+        unsigned int y{0};
     };
 
    public:
-    location_t location;
+    location_t location{0};
     enum class TOKEN_TYPE : std::uint8_t {
 #define TOKEN(ENUM, VALUE) ENUM = VALUE,
         TOKEN_TABLE
 #undef TOKEN
-    } type;
-
-    std::string value;
-
+    } type = TOKEN_TYPE::TK_UNKNOWN;
+    std::string value{""};
     static std::string type_to_string(const TOKEN_TYPE token) {
         switch (token) {
 #define TOKEN(ENUM, _)                     \

@@ -5,6 +5,7 @@
 
 #include "../lex/lexer.hpp"
 #include "../prep/prep.hpp"
+#include "../tokens.hpp"
 
 template <>
 struct std::formatter<decltype(std::declval<monac::prep::preprocessor>().process())> {

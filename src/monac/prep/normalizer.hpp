@@ -19,7 +19,7 @@ class normalizer {
     normalizer& operator=(const normalizer&) = delete;
     ~normalizer() = default;
 
-    std::string process() {
+    std::string process() noexcept {
         std::string ret{""};
         while (!mona::_eof()(_m_stream)) {
             auto skippable_parses = mona::_any(mona::_match(" "), mona::_match("\\\r\n"), mona::_match("\\\n"));

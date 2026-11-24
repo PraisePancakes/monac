@@ -16,6 +16,5 @@ EXAMPLES:
     monac --lex input.mx 
     monac --ast input.mx -o ast.txt
     monac --asm input.mx -o assembly.s
-    monac -o output  -m path/to/module
 
 

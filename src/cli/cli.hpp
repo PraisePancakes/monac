@@ -17,9 +17,9 @@ class cli_except final : public std::exception {
 
    public:
     cli_except() : _m_what{""} {};
-    cli_except(const std::string& what) : _m_what(what) {};
-    std::string get_reason() const {
-        return "[MONAC-CLI-EXCEPT]: " + _m_what;
+    cli_except(const std::string& what) : _m_what(std::format("[MONAC-CLI-EXCEPT]: {}", what)) {};
+    [[nodiscard]] const char* what() const noexcept override {
+        return _m_what.c_str();
     };
     ~cli_except() = default;
 };
@@ -49,7 +49,7 @@ class args final {
     struct cli_info {
         std::vector<std::filesystem::path> all_paths;
         std::filesystem::path output;
-    } m_info;
+    } _m_info;
     void set_flag(CLI_FLAGS flag) {
         _m_flags |= static_cast<flag_t>(flag);
     };
@@ -111,7 +111,7 @@ class args final {
         }
         std::filesystem::path path{op.value()};
         if (!path.has_extension()) throw cli_except("Output path does not have an extension");
-        m_info.output = path;
+        _m_info.output = path;
     };
 
     void parse_FLAG_HELP() {
@@ -171,7 +171,7 @@ class args final {
                                                 auto files = dm.resolve_directory();
                                                 for (const auto& f : files)
                                                     if (f.extension() == ".mx" || f.extension() == ".mm")
-                                                        m_info.all_paths.push_back(f);
+                                                        _m_info.all_paths.push_back(f);
                                                     else
                                                         glob::log(glob::log_info::LOG_TYPE::WARNING, std::format("File format not recognized, skipping: {}", f.string()), std::cerr);
                                             });
@@ -224,7 +224,7 @@ class args final {
 
     cli_info execute() const {
         if (is_set(CLI_FLAGS::FLAG_HELP)) {
-            glob::log(glob::log_info::LOG_TYPE::INFO, _m_usage, std::cout);
+            glob::log(glob::log_info::LOG_TYPE::INFO, std::format("\n{}", _m_usage), std::cout);
             throw cli_except("help exception");
         }
 
@@ -232,11 +232,11 @@ class args final {
             glob::log(glob::log_info::LOG_TYPE::INFO, MONAC_VERSION, std::cout);
             throw cli_except("version exception");
         }
-        if (m_info.all_paths.empty()) {
+        if (_m_info.all_paths.empty()) {
             glob::log(glob::log_info::LOG_TYPE::FATAL, "no input files\ncompilation halted.", std::cout);
             throw cli_except("Cli couldn't parse any input files, see `monac --help` for more details.");
         }
-        return m_info;
+        return _m_info;
     };
 };
 };  // namespace cli
