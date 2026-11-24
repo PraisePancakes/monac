@@ -68,6 +68,14 @@ struct token {
         os << std::format("[{}] : {} at line {}:{}", token::type_to_string(t.type), t.value, t.location.y, t.location.x);
         return os;
     };
+
+    [[nodiscard]] friend bool operator==(const token& a, const token& b) noexcept {
+        return a.type == b.type;
+    };
+
+    [[nodiscard]] friend bool operator!=(const token& a, const token& b) noexcept {
+        return !(a == b);
+    }
 };
 
 };  // namespace monac::semantic

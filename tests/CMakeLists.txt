@@ -16,6 +16,7 @@ unit_parsers.cpp
 prep/prep_parsers.cpp
 arena.cpp
 cli.cpp
+worm_machine.cpp
 )
 
 target_compile_options(monac_tests PRIVATE

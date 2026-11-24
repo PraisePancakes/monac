@@ -23,13 +23,15 @@ class lex_error final : public std::exception {
         return _m_what.c_str();
     };
 };
-class lexer final : public worm_machine<std::string_view> {
+class lexer final {
+    std::string _m_source;
+    worm_machine<std::string> _m_fsm;
     unsigned int _m_x{0};  // pos
     unsigned int _m_y{1};  // line
     std::vector<token> _m_tokens;
     std::string stringify() {
         std::string ret{""};
-        for (const auto c : *this) ret += c;
+        for (const auto c : _m_fsm) ret += c;
         return ret;
     };
 
@@ -38,25 +40,25 @@ class lexer final : public worm_machine<std::string_view> {
     }
 
     token lex_partial_number() {
-        while (std::isdigit(peek())) {
+        while (std::isdigit(_m_fsm.peek())) {
             _m_x++;
-            advance();
+            _m_fsm.advance();
         }
         return create_token(type::TK_NUMBER);
     };
 
     token lex_number() {
-        while (std::isdigit(peek())) {
+        while (std::isdigit(_m_fsm.peek())) {
             _m_x++;
-            advance();
+            _m_fsm.advance();
         }
-        if (peek() == '.') {
+        if (_m_fsm.peek() == '.') {
             _m_x++;
-            advance();
+            _m_fsm.advance();
         }
-        while (std::isdigit(peek())) {
+        while (std::isdigit(_m_fsm.peek())) {
             _m_x++;
-            advance();
+            _m_fsm.advance();
         }
         return create_token(type::TK_NUMBER);
     }
@@ -65,22 +67,22 @@ class lexer final : public worm_machine<std::string_view> {
         auto start_x = _m_x;
         auto start_y = _m_y;
 
-        while (peek() != '\"') {
-            if (is_end()) throw lex_error("non terminated string literal, expected \" to close string", start_x, start_y);
+        while (_m_fsm.peek() != '\"') {
+            if (_m_fsm.is_end()) throw lex_error("non terminated string literal, expected \" to close string", start_x, start_y);
             _m_x++;
-            advance();
+            _m_fsm.advance();
         }
-        advance();
+        _m_fsm.advance();
         return create_token(type::TK_STRING_LIT);
     };
 
     token lex_rest(const char c) {
         if (std::isdigit(c)) {
             return lex_number();
-        } else if (std::isalpha(c) || peek() == '_') {
-            while (std::isalnum(peek()) || peek() == '_') {
+        } else if (std::isalpha(c) || _m_fsm.peek() == '_') {
+            while (std::isalnum(_m_fsm.peek()) || _m_fsm.peek() == '_') {
                 _m_x++;
-                advance();
+                _m_fsm.advance();
             }
             return create_token(type::TK_IDENTIFIER);
         }
@@ -96,7 +98,7 @@ class lexer final : public worm_machine<std::string_view> {
             case ':':
                 return create_token(type::TK_COLON);
             case '.': {
-                if (std::isdigit(peek())) return lex_partial_number();
+                if (std::isdigit(_m_fsm.peek())) return lex_partial_number();
                 return create_token(type::TK_DOT);
             }
             case '$':
@@ -104,9 +106,9 @@ class lexer final : public worm_machine<std::string_view> {
             case '/':
                 return create_token(type::TK_SLASH);
             case '*': {
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_STAR_EQ);
                 }
                 return create_token(type::TK_STAR);
@@ -126,40 +128,40 @@ class lexer final : public worm_machine<std::string_view> {
             case '}':
                 return create_token(type::TK_RCURL);
             case '=': {
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_EQUALITY);
                 };
                 return create_token(type::TK_EQ);
             };
             case '+': {
-                if (peek() == '+') {
+                if (_m_fsm.peek() == '+') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_INC);
                 };
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_PLUS_EQ);
                 }
                 return create_token(type::TK_PLUS);
             }
             case '-': {
-                if (peek() == '-') {
+                if (_m_fsm.peek() == '-') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_DEC);
                 };
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_MINUS_EQ);
                 }
-                if (std::isdigit(peek())) return lex_number();
-                if (peek() == '.') {
-                    advance();
+                if (std::isdigit(_m_fsm.peek())) return lex_number();
+                if (_m_fsm.peek() == '.') {
+                    _m_fsm.advance();
                     _m_x++;
                     return lex_partial_number();
                 }
@@ -167,25 +169,25 @@ class lexer final : public worm_machine<std::string_view> {
                 return create_token(type::TK_MINUS);
             }
             case '!': {
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_BANG_EQ);
                 }
                 return create_token(type::TK_BANG);
             }
             case '<': {
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_LTE);
                 }
                 return create_token(type::TK_LT);
             }
             case '>': {
-                if (peek() == '=') {
+                if (_m_fsm.peek() == '=') {
                     _m_x++;
-                    advance();
+                    _m_fsm.advance();
                     return create_token(type::TK_GTE);
                 }
                 return create_token(type::TK_GT);
@@ -200,27 +202,27 @@ class lexer final : public worm_machine<std::string_view> {
     lexer(const lexer&) = default;
     lexer& operator=(const lexer&) = default;
     lexer& operator=(lexer&&) = default;
-    lexer(const std::string& s) : worm_machine{s} {};
+    lexer(const std::string& s) : _m_source{s}, _m_fsm{_m_source} {};
 
     std::span<token> lex() {
-        while (!this->is_end()) {
-            while (std::isspace(static_cast<unsigned char>(peek()))) {
-                const char c = advance();
+        while (!this->_m_fsm.is_end()) {
+            while (std::isspace(static_cast<unsigned char>(_m_fsm.peek()))) {
+                const char c = _m_fsm.advance();
                 if (c == '\n') {
                     _m_x = 0;
                     _m_y++;
                 } else if (c == '\r') {
-                    if (peek() == '\n') advance();
+                    if (_m_fsm.peek() == '\n') _m_fsm.advance();
                     _m_x = 0;
                     _m_y++;
                 } else
                     _m_x++;
-                this->finish_unit();
+                this->_m_fsm.finish_unit();
             }
-            const char c = advance();
+            const char c = _m_fsm.advance();
             _m_x++;
             _m_tokens.push_back(lex_token(c));
-            this->finish_unit();
+            this->_m_fsm.finish_unit();
         };
         return _m_tokens;
     };
