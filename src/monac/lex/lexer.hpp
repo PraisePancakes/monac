@@ -44,6 +44,15 @@ class lexer final : public worm_machine<std::string_view> {
         return create_token(type::TK_NUMBER);
     }
 
+    token lex_string_lit() {
+        while (peek() != '\"') {
+            _m_x++;
+            advance();
+        }
+        advance();
+        return create_token(type::TK_STRING_LIT);
+    };
+
     token lex_rest(const char c) {
         if (std::isdigit(c)) {
             return lex_number();
@@ -59,6 +68,8 @@ class lexer final : public worm_machine<std::string_view> {
     };
     token lex_token(const char c) {
         switch (c) {
+            case '\"':
+                return lex_string_lit();
             case ';':
                 return create_token(type::TK_SEMI);
             case ':':

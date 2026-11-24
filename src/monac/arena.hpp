@@ -34,7 +34,7 @@ class arena final {
 
     arena& operator=(arena&& other) = delete;
     ~arena() {
-        if (_m_buffer)  // just a safe guard, this is always true anyways
+        if (_m_buffer)
             alloc_traits::deallocate(_m_allocator, _m_buffer, _m_capacity);
     };
 
