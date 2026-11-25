@@ -8,7 +8,7 @@
 namespace monac::semantic {
 
 template <std::ranges::contiguous_range T_>
-class worm_machine {
+class worm_machine final {
     using value_type = T_::value_type;
     using size_type = T_::size_type;
     using const_pointer = T_::const_pointer;
@@ -36,7 +36,7 @@ class worm_machine {
         }
     };
 
-    // generalized
+    // generalized to match anything other than chars
     template <std::size_t I_ = 0, utils::traits::tuple_like Tup_>
         requires(I_ >= 0 && !std::convertible_to<std::tuple_element_t<0, Tup_>, std::string_view> && !utils::traits::char_like<value_type>)
     bool _match_helper(Tup_& tup) {
@@ -97,8 +97,6 @@ class worm_machine {
         if (v != peek()) return std::unexpected(error);
         return advance();
     };
-
-    // generalized specialization
 
     template <typename... Args_>
         requires(sizeof...(Args_) > 1)

@@ -203,8 +203,9 @@ class lexer final {
     lexer& operator=(const lexer&) = default;
     lexer& operator=(lexer&&) = default;
     lexer(const std::string& s) : _m_source{s}, _m_fsm{_m_source} {};
+    lexer(std::string&& s) : _m_source{std::move(s)}, _m_fsm{_m_source} {};
 
-    std::span<token> lex() {
+    std::vector<token> lex() {
         while (!this->_m_fsm.is_end()) {
             while (std::isspace(static_cast<unsigned char>(_m_fsm.peek()))) {
                 const char c = _m_fsm.advance();

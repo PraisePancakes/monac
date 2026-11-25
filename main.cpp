@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
                     auto prep_info = prep.process();
                     out_stream << std::format("Preprocess {} with contents:\n{}\n\n", path.c_str(), prep_info);
                     if (cli.is_set(args::CLI_FLAGS::FLAG_LEX)) {
-                        monac::semantic::lexer lexer{prep_info.expanded};
+                        monac::semantic::lexer lexer{std::move(prep_info.expanded)};
                         const auto tokens = lexer.lex();
                         out_stream << std::format("Lexer {} with contents:\n{}\n", path.c_str(), tokens);
                     }
@@ -120,9 +120,9 @@ int main(int argc, char** argv) {
                 monac::prep::preprocessor prep{monac::prep::normalizer{ss}.process()};
                 glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Preprocessing...\t\t{}", path.c_str()), std::clog);
                 const auto prep_info = prep.process();
+                glob::log(glob::log_info::LOG_TYPE::INFO, std::format("Compiling...\t\t{}", path.c_str()), std::clog);
                 monac::semantic::lexer lexer{prep_info.expanded};
-                const auto token_span = lexer.lex();
-                monac::semantic::parser parser{token_span};
+                monac::semantic::parser parser{lexer.lex()};
             });
 
             glob::report();
