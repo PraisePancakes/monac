@@ -3,6 +3,7 @@
 #include "../arena.hpp"
 #include "../fsm.hpp"
 #include "../tokens.hpp"
+#include "node.hpp"
 namespace monac::semantic {
 
 class parser final {

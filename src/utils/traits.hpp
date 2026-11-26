@@ -13,6 +13,17 @@ concept char_like = std::same_as<std::remove_cv_t<T>, char> ||
 
 template <typename T>
 concept tuple_like = requires { std::tuple_size<T>::value; };
+
+template <typename T>
+concept safely_addressable = requires(T& x) {
+    std::addressof(x);
+};
+
+template <typename T>
+concept hashable = requires(const std::hash<T> hasher, const T& value) {
+    { hasher(value) } -> std::convertible_to<std::size_t>;
+};
+
 };  // namespace utils::traits
 
 #endif
