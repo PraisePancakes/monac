@@ -48,12 +48,12 @@ struct variable {
     std::string ident;
 };
 struct unary {
-    token::TOKEN_TYPE op;
+    token op;
     expr_t rhs;
 };
 struct binary {
     expr_t lhs;
-    token::TOKEN_TYPE op;
+    token op;
     expr_t rhs;
 };
 

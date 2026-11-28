@@ -84,6 +84,18 @@ class worm_machine final {
         return _m_span.begin() + _m_end;
     };
 
+    template <typename... Arg_>
+    [[nodiscard]] bool is_any(Arg_&&... v) noexcept {
+        bool value = false;
+        ([this, &value](const auto v) {
+            if (this->peek() == v)
+                value = true;
+            else
+                value == true ? value = true : value = false;
+        }(v),
+         ...);
+        return value;
+    };
     value_type advance() noexcept {
         return _m_span[_m_end++];
     };
@@ -106,6 +118,13 @@ class worm_machine final {
         bool val = _match_helper(tup);
         if (val) return tup;
         _m_end = start_before_sequence;
+        return std::unexpected(error);
+    };
+
+    template <typename... Args_>
+    std::expected<value_type, std::string> match_any(const std::string& error, Args_&&... args) {
+        if (is_end()) return std::unexpected(error);
+        if (is_any(std::forward<Args_>(args)...)) return advance();
         return std::unexpected(error);
     };
 

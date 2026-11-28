@@ -68,7 +68,13 @@ struct token {
         os << std::format("[{}] : {} at line {}:{}", token::type_to_string(t.type), t.value, t.location.y, t.location.x);
         return os;
     };
+    [[nodiscard]] friend bool operator==(const token& a, TOKEN_TYPE t) noexcept {
+        return a.type == t;
+    }
 
+    [[nodiscard]] friend bool operator!=(const token& a, TOKEN_TYPE t) noexcept {
+        return !(a == t);
+    }
     [[nodiscard]] friend bool operator==(const token& a, const token& b) noexcept {
         return a.type == b.type;
     };
